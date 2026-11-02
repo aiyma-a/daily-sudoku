@@ -174,6 +174,9 @@
     if (st.vals.join("") === day[level].solution) {
       st.done = true;
       stopTimer();
+      $("board").classList.remove("win");
+      void $("board").offsetWidth; // restart the animation
+      $("board").classList.add("win");
     }
     save();
     render();
@@ -221,6 +224,19 @@
     load();
   });
   document.addEventListener("visibilitychange", () => { if (st) save(); });
+
+  // --------------------------------------------------------------- themes
+  const THEMES = ["classic", "fall", "cartoon"];
+  function setTheme(t) {
+    if (!THEMES.includes(t)) t = "classic";
+    document.body.dataset.theme = t;
+    localStorage.setItem("ds:theme", t);
+    [...$("themes").children].forEach((b) => b.classList.toggle("active", b.dataset.pick === t));
+  }
+  $("themes").addEventListener("click", (e) => {
+    if (e.target.dataset && e.target.dataset.pick) setTheme(e.target.dataset.pick);
+  });
+  setTheme(localStorage.getItem("ds:theme") || "classic");
 
   // ----------------------------------------------------------------- boot
   $("date").textContent = new Date(today + "T12:00:00").toLocaleDateString(undefined,
