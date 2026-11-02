@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Daily Sudoku</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="classic">
+<main>
+  <header>
+    <h1>Daily Sudoku</h1>
+    <div id="date"></div>
+  </header>
+
+  <nav id="levels" aria-label="Difficulty">
+    <button data-level="easy">Easy</button>
+    <button data-level="medium">Medium</button>
+    <button data-level="hard">Hard</button>
+  </nav>
+
+  <div id="status"><span id="timer">0:00</span><span id="msg"></span></div>
+
+  <div id="board" role="grid" aria-label="Sudoku board"></div>
+
+  <div id="tools">
+    <button id="notes" aria-pressed="false">Notes: off</button>
+    <button id="erase">Erase</button>
+    <button id="undo">Undo</button>
+  </div>
+  <div id="pad"></div>
+  <p id="error" hidden></p>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
