@@ -21,13 +21,19 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--font); }
-main { max-width: 480px; margin: 0 auto; padding: 12px 12px calc(16px + env(safe-area-inset-bottom)); }
+main {
+  max-width: 560px; margin: 0 auto; min-height: 100dvh;
+  padding: 8px max(12px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+}
 header { display: flex; justify-content: space-between; align-items: baseline; }
 h1 { font-size: 1.3rem; margin: 4px 0; }
 #date { color: var(--note); font-size: .9rem; }
 
-#levels { display: flex; gap: 8px; margin: 8px 0; }
+#levelrow { display: flex; gap: 8px; margin: 6px 0; }
+#levels { display: flex; gap: 8px; flex: 1; }
 #levels button { flex: 1; }
+#levelrow button { min-height: 44px; }
+#fit { padding: 0 12px; white-space: nowrap; }
 button {
   font: inherit; padding: 10px 8px; border: 1px solid var(--btn-border);
   background: var(--btn); color: var(--text); border-radius: var(--radius);
@@ -46,10 +52,11 @@ button:active { filter: brightness(.95); }
   display: grid; grid-template-columns: repeat(9, 1fr);
   aspect-ratio: 1; width: 100%;
   background: var(--board-bg); border: 2px solid var(--line-strong);
+  grid-template-rows: repeat(9, minmax(0, 1fr));
   border-radius: var(--radius); overflow: hidden; user-select: none;
 }
 .cell {
-  position: relative; display: flex; align-items: center; justify-content: center;
+  line-height: 1; min-height: 0; position: relative; display: flex; align-items: center; justify-content: center;
   border: 1px solid var(--line); font-size: clamp(1.1rem, 6vw, 1.8rem);
   background: var(--board-bg); cursor: pointer;
 }
@@ -64,16 +71,16 @@ button:active { filter: brightness(.95); }
 .notes { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; height: 100%; padding: 1px; }
 .notes span { display: flex; align-items: center; justify-content: center; font-size: clamp(.6rem, 3.2vw, .9rem); font-weight: 600; color: var(--note); }
 
-#tools { display: flex; gap: 8px; margin: 12px 0 8px; }
-#tools button { flex: 1; }
-#pad { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
-#pad button { padding: 12px 0; font-size: 1.3rem; position: relative; }
+#tools { display: flex; gap: 8px; margin: 10px 0 8px; }
+#tools button { flex: 1; min-height: 44px; padding: 8px 4px; }
+#pad { display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; }
+#pad button { padding: 0; min-height: 52px; font-size: 1.35rem; position: relative; }
 #pad button.used { opacity: .35; }
 #error { color: var(--conflict-text); }
 
 /* ------------------------------------------------------------- themes */
 #themes { display: flex; gap: 6px; margin: 4px 0 6px; }
-#themes button { flex: 1; padding: 6px 4px; font-size: .85rem; }
+#themes button { flex: 1; min-height: 44px; padding: 6px 4px; font-size: .9rem; }
 #themes button.active { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 
 [data-theme="fall"] {
@@ -146,10 +153,57 @@ body[data-theme="cartoon"] { background: var(--bg); }
 
 .cell.hint { outline: 3px solid var(--accent); outline-offset: -3px; animation: hintpulse 1.2s ease-in-out 3; }
 @keyframes hintpulse { 50% { filter: brightness(1.12); } }
-#hinttext { min-height: 2.6em; margin: 0 2px 6px; font-size: .9rem; font-weight: 600; color: var(--accent); }
-#fit { width: 100%; margin: 8px 0 0; padding: 8px; font-size: .9rem; }
+#hinttext { min-height: 2.4em; margin: 0 2px 4px; line-height: 1.2; font-size: .9rem; font-weight: 600; color: var(--accent); }
 #hint.pulse { animation: hintbtn 1s ease-in-out infinite; border-color: var(--accent); }
 @keyframes hintbtn { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent); } }
 #how { text-align: center; margin: 14px 0 0; font-size: .85rem; }
 #how a { color: var(--accent); }
-#reset { width: 100%; margin: 12px 0 0; padding: 10px; font-size: .9rem; color: var(--conflict-text); }
+#reset { width: 100%; margin: 6px 0 0; min-height: 44px; padding: 10px; font-size: .9rem; color: var(--conflict-text); }
+
+#status { margin: 2px 2px; }
+#more { margin-top: 10px; }
+
+/* Landscape phones and foldables: board on the left, controls on the right,
+   so nothing needs scrolling when the screen is short. */
+@media (orientation: landscape) and (max-height: 620px) {
+  main {
+    max-width: none; height: 100dvh; min-height: 0; overflow: hidden;
+    display: grid; gap: 0 14px; align-content: start;
+    grid-template-columns: min(calc(100dvh - 16px), 56vw) 1fr;
+    grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr) auto auto;
+    padding-top: 8px; padding-bottom: 8px;
+  }
+  main { --board: min(calc(100dvh - 16px), 56vw); }
+  .cell { font-size: calc(var(--board) / 9 * 0.62); }
+  .notes span { font-size: calc(var(--board) / 27 * 0.85); }
+  #board { grid-column: 1; grid-row: 1 / span 9; width: auto; height: auto; align-self: start; }
+  #top { grid-area: 1 / 2; } #levelrow { grid-area: 2 / 2; } #status { grid-area: 3 / 2; }
+  #hinttext { grid-area: 4 / 2; } #tools { grid-area: 5 / 2; } #pad { grid-area: 6 / 2; }
+  #more { grid-area: 7 / 2; } #error { grid-area: 8 / 2; } #how { grid-area: 9 / 2; }
+  #more { overflow: auto; min-height: 0; margin-top: 6px; }
+  h1 { font-size: 1.1rem; }
+  #hinttext { min-height: 2.4em; }
+  #pad button { min-height: 44px; }
+  #more #themes, #more #reset { margin-top: 4px; }
+  #how { margin: 4px 0 0; }
+}
+
+/* Narrow portrait phones: two-row keypad so every key is at least 44px wide */
+@media (max-width: 400px) and (orientation: portrait) {
+  #pad { grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  #pad button { font-size: 1.3rem; min-height: 46px; }
+}
+/* Very narrow screens (for example a folded foldable) */
+@media (max-width: 340px) {
+  #tools button, #levelrow button { font-size: .8rem; }
+  h1 { font-size: 1.1rem; }
+}
+@media (orientation: landscape) and (max-height: 620px) and (max-width: 760px) {
+  #pad { grid-template-columns: repeat(5, 1fr); }
+  #pad button { min-height: 40px; }
+}
+
+/* Tablets: keep a comfortable width, and keep the board on screen */
+@media (min-width: 600px) and (orientation: portrait) {
+  main { max-width: 600px; }
+}

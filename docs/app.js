@@ -127,7 +127,7 @@
       b.classList.toggle("active", b.dataset.level === level);
       b.classList.toggle("done", isDone(b.dataset.level));
     });
-    $("notes").textContent = `Notes: ${notesOn ? "on" : "off"}`;
+    $("notes").textContent = "Notes";
     $("notes").setAttribute("aria-pressed", notesOn);
     $("msg").textContent = st.done ? "Solved! 🎉" : "";
     $("hinttext").textContent = st.done ? "" : (hintText() || tip);
