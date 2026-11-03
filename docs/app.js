@@ -21,6 +21,9 @@
   let timerId = null;
   let hint = null;      // {cell, digit, why, stage} while a hint is showing
   let hintModel = null;
+  let mistakeModel = null;
+  let pace = JSON.parse(localStorage.getItem("ds:pace") || "null") || { ...window.Mistake.PACE };
+  let lastMove = 0;     // st.elapsed at the last move
   let tip = "";         // message from "Just right for you"
   const loadSkill = () => {
     try { return JSON.parse(localStorage.getItem("ds:skill")) || { ...window.Skill.PRIOR }; }
@@ -43,6 +46,7 @@
     const raw = localStorage.getItem(key());
     st = raw ? JSON.parse(raw) : fresh();
     sel = -1;
+    lastMove = st.elapsed;
     render();
     startTimer();
   }
@@ -150,6 +154,13 @@
       if (st.vals[sel]) clearPeerNotes(sel, n);
     }
     afterMove();
+    if (!notesOn && st.vals[sel] && mistakeModel && !st.done) {
+      const p = window.Mistake.pCorrect(mistakeModel, st.vals, sel, st.vals[sel]);
+      if (p !== null && p < 0.4) {
+        tip = "That one looks like a guess. Double-check its row, column and box.";
+        render();
+      }
+    }
   }
 
   function clearPeerNotes(i, n) {
@@ -182,6 +193,7 @@
   function afterMove(isUndo) {
     hint = null;
     tip = "";
+    noteMove();
     if (st.vals.join("") === day[level].solution) {
       st.done = true;
       stopTimer();
@@ -196,6 +208,23 @@
     }
     save();
     render();
+  }
+
+  // Learn how long this player's pauses usually are; flag an unusual one.
+  function noteMove() {
+    const gap = st.elapsed - lastMove;
+    if (gap > 0) pace = window.Mistake.paceUpdate(pace, gap);
+    lastMove = st.elapsed;
+    localStorage.setItem("ds:pace", JSON.stringify(pace));
+    $("hint").classList.remove("pulse");
+  }
+  function checkStuck() {
+    if (st.done || document.hidden || hint || tip) return;
+    if (st.elapsed - lastMove > window.Mistake.stuckAfter(pace)) {
+      tip = "Taking a while? Tap Hint for a nudge.";
+      $("hint").classList.add("pulse");
+      render();
+    }
   }
 
   // ----------------------------------------------------------------- hints
@@ -242,6 +271,7 @@
       if (document.hidden) return;
       st.elapsed++;
       tick();
+      checkStuck();
       if (st.elapsed % 5 === 0) save();
     }, 1000);
   }
@@ -307,6 +337,7 @@
     { weekday: "long", month: "long", day: "numeric" });
   if (!LEVELS.includes(level)) level = "easy";
 
+  fetch("ml/mistake_model.json").then((r) => r.json()).then((m) => { mistakeModel = m; }).catch(() => {});
   fetch(`puzzles/${today}.json`, { cache: "no-store" })
     .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
     .then((d) => { day = d; build(); load(); })

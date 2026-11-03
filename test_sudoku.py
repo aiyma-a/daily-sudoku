@@ -151,3 +151,64 @@ console.log(JSON.stringify({ fast: run(Math.log(120), 0.9), slow: run(Math.log(7
         for who in ("fast", "slow"):
             self.assertLess(r[who]["after"], r[who]["before"] * 0.6)
         self.assertNotEqual(r["fast"]["pick"], r["slow"]["pick"])
+
+
+class TestMistakeDetector(unittest.TestCase):
+    def test_js_matches_python_and_is_sensible(self):
+        import json, os, random, shutil, subprocess, math
+        node = shutil.which("node")
+        mp = os.path.join(os.path.dirname(__file__), "docs", "ml", "mistake_model.json")
+        if not node or not os.path.exists(mp):
+            self.skipTest("node or model missing")
+        from ml import hints, mistakes
+        model = json.load(open(mp))
+
+        def py_p(cells, i, d):
+            x = mistakes.features(cells, i, d)
+            raw = model["init"]
+            for t in model["trees"]:
+                n = 0
+                while t["l"][n] != -1:
+                    n = t["l"][n] if x[t["f"][n]] <= t["t"][n] else t["r"][n]
+                raw += model["lr"] * t["v"][n]
+            return 1 / (1 + math.exp(-raw))
+
+        rng = random.Random(3)
+        cases = []
+        for k in range(20):
+            pz, _, _ = S.make_puzzle(rng.choice(list(S.LEVELS)), f"m{k}")
+            cells = [int(c) for c in pz]
+            for _ in range(rng.randint(0, 20)):
+                ms = hints.moves(cells)
+                if not ms:
+                    break
+                i, v, _h = rng.choice(ms)
+                cells[i] = v
+            cand = S._candidates(cells)
+            for i in list(cand)[:3]:
+                d = rng.choice(sorted(cand[i]))
+                after = list(cells)
+                after[i] = d
+                cases.append((after, i, d, py_p(cells, i, d)))
+        js = ("const M=require('./docs/mistake.js');const m=require('./docs/ml/mistake_model.json');"
+              "const cs=JSON.parse(process.argv[1]);"
+              "console.log(JSON.stringify(cs.map(c=>M.pCorrect(m,c[0],c[1],c[2]))))")
+        out = subprocess.run([node, "-e", js, json.dumps([[a, i, d] for a, i, d, _ in cases])],
+                             capture_output=True, text=True,
+                             cwd=os.path.dirname(os.path.abspath(__file__)))
+        self.assertEqual(out.returncode, 0, out.stderr)
+        for (_, _, _, p), g in zip(cases, json.loads(out.stdout)):
+            self.assertAlmostEqual(p, g, places=6)
+
+    def test_stuck_threshold_adapts(self):
+        import json, os, shutil, subprocess
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node missing")
+        js = ("const M=require('./docs/mistake.js');"
+              "const run=(g)=>{let p={...M.PACE};for(let i=0;i<30;i++)p=M.paceUpdate(p,g[i%g.length]);return M.stuckAfter(p)};"
+              "console.log(JSON.stringify([run([5,6,4]),run([40,50,45,60])]))")
+        out = subprocess.run([node, "-e", js], capture_output=True, text=True,
+                             cwd=os.path.dirname(os.path.abspath(__file__)))
+        quick, slow = json.loads(out.stdout)
+        self.assertLess(quick, slow)   # a slow thinker is given more time

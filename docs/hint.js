@@ -77,7 +77,7 @@
     return pick;
   }
 
-  const api = { moves, features, score, best };
+  const api = { moves, features, score, best, candidates, ROWS, COLS, BOXES, PEERS };
   if (typeof module !== "undefined") module.exports = api;
   else root.Hint = api;
 })(typeof window !== "undefined" ? window : this);
