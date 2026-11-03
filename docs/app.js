@@ -1,5 +1,6 @@
 "use strict";
 (function () {
+  const T = window.I18n.t;
   const $ = (id) => document.getElementById(id);
   const LEVELS = ["easy", "medium", "hard"];
 
@@ -75,8 +76,8 @@
     $("pnav").hidden = mode !== "practice";
     $("prev").disabled = pidx(level) <= 1;
     $("label").textContent = mode === "daily"
-      ? new Date(today + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })
-      : `${cap(level)} #${pidx(level)}`;
+      ? new Date(today + "T12:00:00").toLocaleDateString(window.I18n.lang === "ru" ? "ru-RU" : undefined, { weekday: "short", month: "short", day: "numeric" })
+      : `${T(cap(level))} #${pidx(level)}`;
   }
 
   // ------------------------------------------------------------ rendering
@@ -153,9 +154,9 @@
       b.classList.toggle("active", b.dataset.level === level);
       b.classList.toggle("done", isDone(b.dataset.level));
     });
-    $("notes").textContent = "Notes";
+    $("notes").textContent = T("Notes");
     $("notes").setAttribute("aria-pressed", notesOn);
-    $("msg").textContent = st.done ? "Solved! 🎉" : "";
+    $("msg").textContent = st.done ? T("Solved! 🎉") : "";
     $("hinttext").textContent = st.done ? "" : (hintText() || tip);
     tick();
   }
@@ -183,7 +184,7 @@
     if (!notesOn && st.vals[sel] && mistakeModel && !st.done) {
       const p = window.Mistake.pCorrect(mistakeModel, st.vals, sel, st.vals[sel]);
       if (p !== null && p < 0.4) {
-        tip = "That one looks like a guess. Double-check its row, column and box.";
+        tip = T("That one looks like a guess. Double-check its row, column and box.");
         render();
       }
     }
@@ -210,7 +211,7 @@
 
   // Wipe everything on this puzzle (numbers, notes, timer) and start fresh.
   function startOver() {
-    if (!confirm("Erase everything on this puzzle and start over?")) return;
+    if (!confirm(T("Erase everything on this puzzle and start over?"))) return;
     const wasCounted = st.counted;
     st = fresh();
     st.counted = wasCounted;   // a finished puzzle was already learned from
@@ -263,7 +264,7 @@
   function checkStuck() {
     if (st.done || document.hidden || hint || tip) return;
     if (st.elapsed - lastMove > window.Mistake.stuckAfter(pace)) {
-      tip = "Taking a while? Tap Hint for a nudge.";
+      tip = T("Taking a while? Tap Hint for a nudge.");
       $("hint").classList.add("pulse");
       render();
     }
@@ -274,10 +275,10 @@
   // top one (docs/hint.js). Press once to see where, again to see the digit.
   function hintText() {
     if (!hint) return "";
-    const where = `row ${((hint.cell / 9) | 0) + 1}, column ${(hint.cell % 9) + 1}`;
+    const where = T("row {r}, column {c}", { r: ((hint.cell / 9) | 0) + 1, c: (hint.cell % 9) + 1 });
     if (hint.none) return hint.none;
-    if (hint.stage === 2) return `Put ${hint.digit} in ${where}.`;
-    return `Look at ${where}: ${hint.why} (tap Hint again for the digit)`;
+    if (hint.stage === 2) return T("Put {d} in {where}.", { d: hint.digit, where });
+    return T("Look at {where}: {why} (tap Hint again for the digit)", { where, why: T(hint.why) });
   }
 
   async function giveHint() {
@@ -288,12 +289,12 @@
     const sol = cur.solution;
     const wrong = st.vals.findIndex((v, i) => v && v !== +sol[i]);
     if (wrong >= 0) {
-      hint = { cell: wrong, none: "This number looks wrong. Erase it first." };
+      hint = { cell: wrong, none: T("This number looks wrong. Erase it first.") };
       sel = wrong; render(); return;
     }
     if (!hintModel) hintModel = await fetch("ml/hint_model.json").then((r) => r.json());
     const pick = window.Hint.best(hintModel, st.vals);
-    if (!pick) { hint = { cell: -1, none: "No easy move here. Try pencil notes." }; render(); return; }
+    if (!pick) { hint = { cell: -1, none: T("No easy move here. Try pencil notes.") }; render(); return; }
     hint = { cell: pick.cell, digit: pick.digit, stage: 1,
       why: pick.hidden ? "one digit fits only here in its row, column or box."
                        : "only one digit can go in this cell." };
@@ -341,12 +342,12 @@
     const open = mode === "daily" && day
       ? LEVELS.filter((lv) => !isDone(lv)).map((lv) => ({ level: lv, score: day[lv].score || 70 }))
       : LEVELS.map((lv) => ({ level: lv, score: TYPICAL[lv] }));
-    if (!open.length) { tip = "You finished all three today. Try Practice for more!"; render(); return; }
+    if (!open.length) { tip = T("You finished all three today. Try Practice for more!"); render(); return; }
     const m = loadSkill();
     const r = window.Skill.recommend(m, open);
     const mins = Math.max(1, Math.round(r.seconds / 60));
-    tip = `Just right: ${r.level[0].toUpperCase() + r.level.slice(1)}, about ${mins} min for you` +
-      (m.n ? ` (learned from ${m.n} solve${m.n > 1 ? "s" : ""}).` : " (a first guess; it learns as you solve).");
+    tip = T("Just right: {lv}, about {m} min for you", { lv: T(cap(r.level)), m: mins }) +
+      (m.n ? T(" (learned from {n} solves).", { n: m.n }) : T(" (a first guess; it learns as you solve)."));
     if (r.level !== level) {
       save(); hint = null; level = r.level; localStorage.setItem("ds:level", level); load();
     } else render();
@@ -366,7 +367,7 @@
   // ------------------------------------------------- Daily / Practice menu
   function switchTo(newMode) {
     if (newMode === "daily" && !day) {
-      tip = "Today's puzzles are not saved on this phone yet. Open the game once with internet and they will work offline too.";
+      tip = T("Today's puzzles are not saved on this phone yet. Open the game once with internet and they will work offline too.");
       render(); return;
     }
     if (newMode === mode) return;
@@ -399,6 +400,9 @@
   });
   setTheme(localStorage.getItem("ds:theme") || "classic");
 
+  $("lang").addEventListener("click", () => window.I18n.toggle());
+  window.onLangChange = () => { hint = null; tip = ""; if (st) render(); updateChrome(); };
+
   // ----------------------------------------------------------------- boot
   if (!LEVELS.includes(level)) level = "easy";
 
@@ -411,7 +415,7 @@
     day = d; diffModel = dm;
     build();
     if (!day && mode === "daily") {
-      tip = "No connection and today's puzzle is not saved yet, so here is Practice (it works offline).";
+      tip = T("No connection and today's puzzle is not saved yet, so here is Practice (it works offline).");
     }
     load();
     keepOffline();

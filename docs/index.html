@@ -12,51 +12,52 @@
 <body data-theme="classic">
 <main>
   <header id="top">
-    <h1>Daily Sudoku</h1>
-    <div id="mode" role="group" aria-label="Mode">
-      <button data-mode="daily">Daily</button>
-      <button data-mode="practice">Practice</button>
+    <h1 data-i18n="Daily Sudoku">Daily Sudoku</h1>
+    <div id="mode" role="group" data-i18n-label="Mode" aria-label="Mode">
+      <button data-mode="daily" data-i18n="Daily">Daily</button>
+      <button data-mode="practice" data-i18n="Practice">Practice</button>
     </div>
   </header>
   <div id="levelrow">
-  <nav id="levels" aria-label="Difficulty">
-    <button data-level="easy">Easy</button>
-    <button data-level="medium">Medium</button>
-    <button data-level="hard">Hard</button>
+  <nav id="levels" data-i18n-label="Difficulty" aria-label="Difficulty">
+    <button data-level="easy" data-i18n="Easy">Easy</button>
+    <button data-level="medium" data-i18n="Medium">Medium</button>
+    <button data-level="hard" data-i18n="Hard">Hard</button>
   </nav>
-  <button id="fit" aria-label="Just right for you" title="Just right for you">★ For me</button>
+  <button id="fit" data-i18n-label="Just right for you" aria-label="Just right for you" title="Just right for you"><span data-i18n="★ For me">★ For me</span></button>
   </div>
 
   <div id="sub">
     <div id="pnav" hidden>
-      <button id="prev" aria-label="Previous practice puzzle">&lsaquo; Previous</button>
-      <button id="next" aria-label="New practice puzzle">New puzzle &rsaquo;</button>
+      <button id="prev" data-i18n-label="Previous practice puzzle" aria-label="Previous practice puzzle"><span data-i18n="‹ Previous">&lsaquo; Previous</span></button>
+      <button id="next" data-i18n-label="New practice puzzle" aria-label="New practice puzzle"><span data-i18n="New puzzle ›">New puzzle &rsaquo;</span></button>
     </div>
     <div id="status"><span id="timer">0:00</span><span id="label"></span><span id="msg"></span></div>
   </div>
 
   <p id="hinttext" aria-live="polite"></p>
 
-  <div id="board" role="grid" aria-label="Sudoku board"></div>
+  <div id="board" role="grid" data-i18n-label="Sudoku board" aria-label="Sudoku board"></div>
 
   <div id="tools">
     <button id="notes" aria-pressed="false">Notes: off</button>
-    <button id="erase">Erase</button>
-    <button id="undo">Undo</button>
-    <button id="hint">Hint</button>
+    <button id="erase" data-i18n="Erase">Erase</button>
+    <button id="undo" data-i18n="Undo">Undo</button>
+    <button id="hint" data-i18n="Hint">Hint</button>
   </div>
   <div id="pad"></div>
   <div id="more">
-    <div id="themes" role="group" aria-label="Theme">
-      <button data-pick="classic">Classic</button>
-      <button data-pick="fall">Fall</button>
-      <button data-pick="cartoon">Cartoon</button>
+    <div id="themes" role="group" data-i18n-label="Theme" aria-label="Theme">
+      <button data-pick="classic" data-i18n="Classic">Classic</button>
+      <button data-pick="fall" data-i18n="Fall">Fall</button>
+      <button data-pick="cartoon" data-i18n="Cartoon">Cartoon</button>
     </div>
-    <button id="reset">Erase everything and start over</button>
+    <button id="reset" data-i18n="Erase everything and start over">Erase everything and start over</button>
   </div>
   <p id="error" hidden></p>
-  <p id="how"><a href="how.html">How it works (the machine learning)</a> &middot; <a href="privacy.html">Privacy</a></p>
+  <p id="how"><a href="how.html" data-i18n="How it works (the machine learning)">How it works (the machine learning)</a> &middot; <a id="policy" href="privacy.html" data-i18n="Privacy">Privacy</a> &middot; <button id="lang" aria-label="Language / Язык">RU</button></p>
 </main>
+<script src="i18n.js"></script>
 <script src="confetti.js"></script>
 <script src="hint.js"></script>
 <script src="engine.js"></script>
