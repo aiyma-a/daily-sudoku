@@ -13,7 +13,12 @@
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
   })();
 
-  let day = null;       // {easy:{puzzle,solution}, ...}
+  let day = null;       // today's puzzles {easy:{puzzle,solution,score}, ...}; null when offline and not saved
+  let mode = localStorage.getItem("ds:mode") === "practice" ? "practice" : "daily";
+  let cur = null;       // the puzzle on screen: {puzzle, solution, score}
+  let diffModel = null; // difficulty model, used to make Practice puzzles on the phone
+  const pidx = (lv) => +localStorage.getItem(`ds:pidx:${lv}`) || 1;   // Practice puzzle number per level
+  const TYPICAL = { easy: 40, medium: 65, hard: 135 };               // difficulty scores for guessing in Practice
   let level = localStorage.getItem("ds:level") || "easy";
   let st = null;        // game state for current level
   let sel = -1;
@@ -30,11 +35,12 @@
     catch (e) { return { ...window.Skill.PRIOR }; }
   };
 
-  const key = () => `ds:${today}:${level}`;
-  const save = () => localStorage.setItem(key(), JSON.stringify(st));
+  const keyFor = (lv) => mode === "practice" ? `ds:p:${lv}:${pidx(lv)}` : `ds:${today}:${lv}`;
+  const key = () => keyFor(level);
+  const save = () => { if (st) localStorage.setItem(key(), JSON.stringify(st)); };
 
   function fresh() {
-    const p = day[level].puzzle;
+    const p = cur.puzzle;
     return {
       vals: p.split("").map(Number),
       notes: Array.from({ length: 81 }, () => 0), // bitmask of 1..9
@@ -42,7 +48,17 @@
     };
   }
 
+  // Which puzzle is on screen: today's (Daily) or a numbered one made on the phone (Practice).
+  function pickPuzzle() {
+    if (mode === "daily") { cur = day[level]; return; }
+    cur = window.Engine.makePuzzle(level, `practice-${pidx(level)}`, diffModel);
+    if (cur.score === null) cur.score = TYPICAL[level];
+  }
+
   function load() {
+    if (mode === "daily" && !day) { mode = "practice"; }
+    pickPuzzle();
+    updateChrome();
     const raw = localStorage.getItem(key());
     st = raw ? JSON.parse(raw) : fresh();
     sel = -1;
@@ -51,7 +67,17 @@
     startTimer();
   }
 
-  const isGiven = (i) => day[level].puzzle[i] !== "0";
+  const isGiven = (i) => cur.puzzle[i] !== "0";
+
+  const cap = (w) => w[0].toUpperCase() + w.slice(1);
+  function updateChrome() {
+    [...$("mode").children].forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
+    $("pnav").hidden = mode !== "practice";
+    $("prev").disabled = pidx(level) <= 1;
+    $("label").textContent = mode === "daily"
+      ? new Date(today + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })
+      : `${cap(level)} #${pidx(level)}`;
+  }
 
   // ------------------------------------------------------------ rendering
   function build() {
@@ -136,7 +162,7 @@
 
   function isDone(lv) {
     try {
-      const raw = localStorage.getItem(`ds:${today}:${lv}`);
+      const raw = localStorage.getItem(keyFor(lv));
       return raw ? JSON.parse(raw).done : false;
     } catch (e) { return false; }
   }
@@ -208,18 +234,19 @@
     hint = null;
     tip = "";
     noteMove();
-    if (st.vals.join("") === day[level].solution) {
+    if (st.vals.join("") === cur.solution) {
       st.done = true;
       stopTimer();
       if (!st.counted) {  // learn from this solve, once
         st.counted = true;
         localStorage.setItem("ds:skill", JSON.stringify(
-          window.Skill.update(loadSkill(), day[level].score || 70, st.elapsed, st.hints)));
+          window.Skill.update(loadSkill(), cur.score || 70, st.elapsed, st.hints)));
       }
       $("board").classList.remove("win");
       void $("board").offsetWidth; // restart the animation
       $("board").classList.add("win");
       window.Confetti.burst();
+      if (mode === "practice") $("next").classList.add("pulse");
     }
     save();
     render();
@@ -258,7 +285,7 @@
     if (hint && hint.cell >= 0 && hint.stage === 1 && !hint.none && !st.vals[hint.cell]) {
       hint.stage = 2; st.hints = (st.hints || 0) + 1; save(); render(); return;
     }
-    const sol = day[level].solution;
+    const sol = cur.solution;
     const wrong = st.vals.findIndex((v, i) => v && v !== +sol[i]);
     if (wrong >= 0) {
       hint = { cell: wrong, none: "This number looks wrong. Erase it first." };
@@ -311,9 +338,10 @@
   $("reset").addEventListener("click", startOver);
   $("hint").addEventListener("click", giveHint);
   $("fit").addEventListener("click", () => {
-    const open = LEVELS.filter((lv) => !isDone(lv))
-      .map((lv) => ({ level: lv, score: day[lv].score || 70 }));
-    if (!open.length) { tip = "You finished all three today. Come back tomorrow!"; render(); return; }
+    const open = mode === "daily" && day
+      ? LEVELS.filter((lv) => !isDone(lv)).map((lv) => ({ level: lv, score: day[lv].score || 70 }))
+      : LEVELS.map((lv) => ({ level: lv, score: TYPICAL[lv] }));
+    if (!open.length) { tip = "You finished all three today. Try Practice for more!"; render(); return; }
     const m = loadSkill();
     const r = window.Skill.recommend(m, open);
     const mins = Math.max(1, Math.round(r.seconds / 60));
@@ -335,6 +363,29 @@
   });
   document.addEventListener("visibilitychange", () => { if (st) save(); });
 
+  // ------------------------------------------------- Daily / Practice menu
+  function switchTo(newMode) {
+    if (newMode === "daily" && !day) {
+      tip = "Today's puzzles are not saved on this phone yet. Open the game once with internet and they will work offline too.";
+      render(); return;
+    }
+    if (newMode === mode) return;
+    save();
+    mode = newMode; localStorage.setItem("ds:mode", mode);
+    hint = null; tip = "";
+    load();
+  }
+  function stepPractice(d) {
+    save();
+    localStorage.setItem(`ds:pidx:${level}`, Math.max(1, pidx(level) + d));
+    hint = null; tip = "";
+    $("next").classList.remove("pulse");
+    load();
+  }
+  $("mode").addEventListener("click", (e) => { if (e.target.dataset.mode) switchTo(e.target.dataset.mode); });
+  $("prev").addEventListener("click", () => stepPractice(-1));
+  $("next").addEventListener("click", () => stepPractice(1));
+
   // --------------------------------------------------------------- themes
   const THEMES = ["classic", "fall", "cartoon"];
   function setTheme(t) {
@@ -349,17 +400,30 @@
   setTheme(localStorage.getItem("ds:theme") || "classic");
 
   // ----------------------------------------------------------------- boot
-  $("date").textContent = new Date(today + "T12:00:00").toLocaleDateString(undefined,
-    { weekday: "long", month: "long", day: "numeric" });
   if (!LEVELS.includes(level)) level = "easy";
 
-  fetch("ml/mistake_model.json").then((r) => r.json()).then((m) => { mistakeModel = m; }).catch(() => {});
-  fetch(`puzzles/${today}.json`, { cache: "no-store" })
-    .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
-    .then((d) => { day = d; build(); load(); })
-    .catch(() => {
-      const e = $("error");
-      e.hidden = false;
-      e.textContent = "Today's puzzles are not published yet. Try again in a bit.";
-    });
+  const getJson = (url, opts) => fetch(url, opts).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
+  getJson("ml/mistake_model.json").then((m) => { mistakeModel = m; }).catch(() => {});
+  Promise.all([
+    getJson(`puzzles/${today}.json`, { cache: "no-store" }).catch(() => null),
+    getJson("ml/difficulty_model.json").catch(() => null),
+  ]).then(([d, dm]) => {
+    day = d; diffModel = dm;
+    build();
+    if (!day && mode === "daily") {
+      tip = "No connection and today's puzzle is not saved yet, so here is Practice (it works offline).";
+    }
+    load();
+    keepOffline();
+  });
+
+  // Offline support: register the service worker and save the coming days' puzzles on the phone.
+  function keepOffline() {
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+    // Once the service worker is in charge, ask for the coming days so it saves them.
+    navigator.serviceWorker.ready.then(() => getJson("puzzles/index.json", { cache: "no-store" })).then((list) => {
+      list.filter((d) => d >= today).slice(0, 14).forEach((d) => fetch(`puzzles/${d}.json`).catch(() => {}));
+    }).catch(() => {});
+  }
 })();

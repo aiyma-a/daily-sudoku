@@ -53,6 +53,13 @@ def write_day(date):
     return True
 
 
+def write_index():
+    """List every published day so phones can save the coming days for offline play."""
+    days = sorted(f[:-5] for f in os.listdir(OUT) if f.endswith(".json") and f != "index.json")
+    with open(os.path.join(OUT, "index.json"), "w") as f:
+        json.dump(days, f)
+
+
 def main(argv):
     days = 3
     if "--days" in argv:
@@ -64,6 +71,7 @@ def main(argv):
     for d in dates:
         datetime.date.fromisoformat(d)
         print(d, "written" if write_day(d) else "exists")
+    write_index()
 
 
 if __name__ == "__main__":

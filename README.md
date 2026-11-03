@@ -22,3 +22,4 @@ Retrain: `.venv/bin/python -m ml.dataset 8000 && .venv/bin/python -m ml.train` (
 - `docs/skill.js`: learns your solve-time pattern on your phone (online learning) to power "Just right for you". Scores were backfilled into older puzzle files.
 - `docs/mistake.js`, `ml/mistakes.py`, `ml/mistake_*.py`: a classifier that flags entries that look like guesses, plus an adaptive "stuck" detector that learns your usual pause length.
 - `docs/how.html` + `ml/summary.py`: the "How it works" page. After retraining, run `python3 -m ml.summary` to refresh its numbers.
+- Practice mode (offline): `docs/engine.js` is a JavaScript port of the generator, rater and difficulty features, so the phone makes numbered puzzles itself. `docs/sw.js` + `docs/manifest.webmanifest` make the game installable and keep the app and the coming days offline. A test checks the JS port matches Python.

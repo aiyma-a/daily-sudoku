@@ -27,7 +27,17 @@ main {
 }
 header { display: flex; justify-content: space-between; align-items: baseline; }
 h1 { font-size: 1.3rem; margin: 4px 0; }
-#date { color: var(--note); font-size: .9rem; }
+#mode { display: flex; }
+#mode button { min-height: 40px; padding: 4px 12px; font-size: .9rem; }
+#mode button:first-child { border-radius: 99px 0 0 99px; }
+#mode button:last-child { border-radius: 0 99px 99px 0; border-left: 0; }
+#mode button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+#pnav { display: flex; gap: 8px; margin: 2px 0 4px; }
+#pnav[hidden] { display: none; }
+#pnav button { flex: 1; min-height: 44px; }
+#pnav button:disabled { opacity: .4; }
+#next.pulse { background: var(--accent); color: #fff; border-color: var(--accent); }
+#label { color: var(--note); font-size: .9rem; }
 
 #levelrow { display: flex; gap: 8px; margin: 6px 0; }
 #levels { display: flex; gap: 8px; flex: 1; }
@@ -177,7 +187,7 @@ body[data-theme="cartoon"] { background: var(--bg); }
   .cell { font-size: calc(var(--board) / 9 * 0.62); }
   .notes span { font-size: calc(var(--board) / 27 * 0.85); }
   #board { grid-column: 1; grid-row: 1 / span 9; width: auto; height: auto; align-self: start; }
-  #top { grid-area: 1 / 2; } #levelrow { grid-area: 2 / 2; } #status { grid-area: 3 / 2; }
+  #top { grid-area: 1 / 2; } #levelrow { grid-area: 2 / 2; } #sub { grid-area: 3 / 2; }
   #hinttext { grid-area: 4 / 2; } #tools { grid-area: 5 / 2; } #pad { grid-area: 6 / 2; }
   #more { grid-area: 7 / 2; } #error { grid-area: 8 / 2; } #how { grid-area: 9 / 2; }
   #more { overflow: auto; min-height: 0; margin-top: 6px; }

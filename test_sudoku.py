@@ -212,3 +212,47 @@ class TestMistakeDetector(unittest.TestCase):
                              cwd=os.path.dirname(os.path.abspath(__file__)))
         quick, slow = json.loads(out.stdout)
         self.assertLess(quick, slow)   # a slow thinker is given more time
+
+
+class TestJsEngine(unittest.TestCase):
+    """The on-phone puzzle maker (docs/engine.js) must agree with Python."""
+
+    def _node(self, js, arg):
+        import json, os, shutil, subprocess
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node missing")
+        out = subprocess.run([node, "-e", js, json.dumps(arg)], capture_output=True, text=True,
+                             cwd=os.path.dirname(os.path.abspath(__file__)))
+        self.assertEqual(out.returncode, 0, out.stderr)
+        return json.loads(out.stdout)
+
+    def test_rater_and_features_match_python(self):
+        import random
+        from ml import features, predict
+        rng = random.Random(11)
+        grids = []
+        for _ in range(60):
+            full = S.random_full_grid(rng)
+            grids.append(S.dig_holes(full, rng, rng.randint(22, 44)))
+        got = self._node(
+            "const E=require('./docs/engine.js');const gs=JSON.parse(process.argv[1]);"
+            "console.log(JSON.stringify(gs.map(g=>{const c=g.split('').map(Number);const r=E.rate(c);"
+            "return {tier:r.tier,steps:r.steps,f:E.features(c)}})))", grids)
+        for g, j in zip(grids, got):
+            r = S.rate(g)
+            self.assertEqual((r["tier"], r["steps"]), (j["tier"], j["steps"]), g)
+            for a, b in zip(features.features(g), j["f"]):
+                self.assertAlmostEqual(a, b, places=6)
+
+    def test_js_puzzles_are_unique_valid_and_repeatable(self):
+        res = self._node(
+            "const E=require('./docs/engine.js');const m=require('./docs/ml/difficulty_model.json');"
+            "const out=[];for(const lv of ['easy','medium','hard'])for(let k=0;k<4;k++){"
+            "const a=E.makePuzzle(lv,'p'+k,m),b=E.makePuzzle(lv,'p'+k,m);out.push([lv,a,b.puzzle])}"
+            "console.log(JSON.stringify(out))", None)
+        for lv, a, again in res:
+            self.assertEqual(a["puzzle"], again)             # same seed, same puzzle
+            self.assertEqual(S.count_solutions(a["puzzle"], 2), 1)
+            self.assertEqual(S.solve(a["puzzle"]), a["solution"])
+            self.assertEqual(S.rate(a["puzzle"])["tier"], S.LEVELS[lv]["tier"])
