@@ -152,3 +152,4 @@ body[data-theme="cartoon"] { background: var(--bg); }
 @keyframes hintbtn { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent); } }
 #how { text-align: center; margin: 14px 0 0; font-size: .85rem; }
 #how a { color: var(--accent); }
+#reset { width: 100%; margin: 12px 0 0; padding: 10px; font-size: .9rem; color: var(--conflict-text); }

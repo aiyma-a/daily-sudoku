@@ -182,6 +182,20 @@
     afterMove();
   }
 
+  // Wipe everything on this puzzle (numbers, notes, timer) and start fresh.
+  function startOver() {
+    if (!confirm("Erase everything on this puzzle and start over?")) return;
+    const wasCounted = st.counted;
+    st = fresh();
+    st.counted = wasCounted;   // a finished puzzle was already learned from
+    hint = null; tip = ""; sel = -1; lastMove = 0;
+    $("board").classList.remove("win");
+    $("hint").classList.remove("pulse");
+    save();
+    render();
+    startTimer();
+  }
+
   function undo() {
     const h = st.history.pop();
     if (!h || st.done) return;
@@ -294,6 +308,7 @@
   $("notes").addEventListener("click", () => { notesOn = !notesOn; render(); });
   $("erase").addEventListener("click", erase);
   $("undo").addEventListener("click", undo);
+  $("reset").addEventListener("click", startOver);
   $("hint").addEventListener("click", giveHint);
   $("fit").addEventListener("click", () => {
     const open = LEVELS.filter((lv) => !isDone(lv))
