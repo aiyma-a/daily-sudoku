@@ -116,3 +116,38 @@ class TestHintParity(unittest.TestCase):
         for e, g in zip(expected, got):
             self.assertEqual((e[0], e[1]), (g[0], g[1]))
             self.assertAlmostEqual(e[2], g[2], places=6)
+
+
+class TestSkillLearner(unittest.TestCase):
+    def test_learner_adapts_to_a_simulated_player(self):
+        """A fast player and a slow player: after 12 solves the model's time
+        guess should be much closer than the starting guess, and the "just
+        right" pick should differ between them."""
+        import json, os, shutil, subprocess
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node missing")
+        js = r"""
+const S = require('./docs/skill.js');
+function player(a, b) {            // true log-time = a + b*score/100, plus noise
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  return (score) => Math.exp(a + b * score / 100 + (rnd() - 0.5) * 0.3);
+}
+const scores = [40, 70, 130];
+function run(a, b) {
+  const solve = player(a, b); let m = {...S.PRIOR};
+  const err = (m) => scores.reduce((t, s) => t + Math.abs(Math.log(S.expectedSeconds(m, s)) - (a + b * s / 100)), 0) / 3;
+  const before = err(m);
+  for (let i = 0; i < 12; i++) { const s = scores[i % 3]; m = S.update(m, s, solve(s), 0); }
+  const opts = scores.map((s, i) => ({ level: ['easy', 'medium', 'hard'][i], score: s }));
+  return { before, after: err(m), pick: S.recommend(m, opts).level };
+}
+console.log(JSON.stringify({ fast: run(Math.log(120), 0.9), slow: run(Math.log(700), 0.7) }));
+"""
+        out = subprocess.run([node, "-e", js], capture_output=True, text=True,
+                             cwd=os.path.dirname(os.path.abspath(__file__)))
+        self.assertEqual(out.returncode, 0, out.stderr)
+        r = json.loads(out.stdout)
+        for who in ("fast", "slow"):
+            self.assertLess(r[who]["after"], r[who]["before"] * 0.6)
+        self.assertNotEqual(r["fast"]["pick"], r["slow"]["pick"])

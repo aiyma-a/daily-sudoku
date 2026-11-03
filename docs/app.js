@@ -21,6 +21,11 @@
   let timerId = null;
   let hint = null;      // {cell, digit, why, stage} while a hint is showing
   let hintModel = null;
+  let tip = "";         // message from "Just right for you"
+  const loadSkill = () => {
+    try { return JSON.parse(localStorage.getItem("ds:skill")) || { ...window.Skill.PRIOR }; }
+    catch (e) { return { ...window.Skill.PRIOR }; }
+  };
 
   const key = () => `ds:${today}:${level}`;
   const save = () => localStorage.setItem(key(), JSON.stringify(st));
@@ -121,7 +126,7 @@
     $("notes").textContent = `Notes: ${notesOn ? "on" : "off"}`;
     $("notes").setAttribute("aria-pressed", notesOn);
     $("msg").textContent = st.done ? "Solved! 🎉" : "";
-    $("hinttext").textContent = st.done ? "" : hintText();
+    $("hinttext").textContent = st.done ? "" : (hintText() || tip);
     tick();
   }
 
@@ -176,9 +181,15 @@
 
   function afterMove(isUndo) {
     hint = null;
+    tip = "";
     if (st.vals.join("") === day[level].solution) {
       st.done = true;
       stopTimer();
+      if (!st.counted) {  // learn from this solve, once
+        st.counted = true;
+        localStorage.setItem("ds:skill", JSON.stringify(
+          window.Skill.update(loadSkill(), day[level].score || 70, st.elapsed, st.hints)));
+      }
       $("board").classList.remove("win");
       void $("board").offsetWidth; // restart the animation
       $("board").classList.add("win");
@@ -253,11 +264,25 @@
   $("erase").addEventListener("click", erase);
   $("undo").addEventListener("click", undo);
   $("hint").addEventListener("click", giveHint);
+  $("fit").addEventListener("click", () => {
+    const open = LEVELS.filter((lv) => !isDone(lv))
+      .map((lv) => ({ level: lv, score: day[lv].score || 70 }));
+    if (!open.length) { tip = "You finished all three today. Come back tomorrow!"; render(); return; }
+    const m = loadSkill();
+    const r = window.Skill.recommend(m, open);
+    const mins = Math.max(1, Math.round(r.seconds / 60));
+    tip = `Just right: ${r.level[0].toUpperCase() + r.level.slice(1)}, about ${mins} min for you` +
+      (m.n ? ` (learned from ${m.n} solve${m.n > 1 ? "s" : ""}).` : " (a first guess; it learns as you solve).");
+    if (r.level !== level) {
+      save(); hint = null; level = r.level; localStorage.setItem("ds:level", level); load();
+    } else render();
+  });
   $("levels").addEventListener("click", (e) => {
     const lv = e.target.dataset && e.target.dataset.level;
     if (!lv || lv === level) return;
     save();
     hint = null;
+    tip = "";
     level = lv;
     localStorage.setItem("ds:level", level);
     load();
