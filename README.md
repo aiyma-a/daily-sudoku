@@ -9,3 +9,12 @@ A new sudoku every day, in three levels (Easy, Medium, Hard).
 
 Run the tests: `python3 -m unittest`
 Make puzzles: `python3 generate.py --days 7`
+
+## Machine learning
+
+- `ml/features.py`: turns a puzzle into 17 numbers (clues, candidates per cell, how far simple forced moves get).
+- `ml/dataset.py`: generates thousands of puzzles and labels each with "effort", the work a human solver needs.
+- `ml/train.py`: trains gradient-boosted trees, compares against simpler models on unseen puzzles, writes `ml/model.json` and charts in `docs/ml/`.
+- `ml/predict.py`: runs the model with no libraries. `generate.py` stores each puzzle's predicted `score`.
+
+Retrain: `.venv/bin/python -m ml.dataset 8000 && .venv/bin/python -m ml.train` (setup: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`).

@@ -5,6 +5,7 @@ With no date, generates today and the next N days (default 3).
 """
 import json, os, sys, datetime
 import sudoku
+from ml import predict
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "puzzles")
 
@@ -16,7 +17,8 @@ def write_day(date):
     day = {}
     for level in sudoku.LEVELS:
         puzzle, solution, r = sudoku.make_puzzle(level, date)
-        day[level] = {"puzzle": puzzle, "solution": solution, "tier": r["tier"]}
+        day[level] = {"puzzle": puzzle, "solution": solution, "tier": r["tier"],
+                       "score": round(predict.score(puzzle), 1)}
     os.makedirs(OUT, exist_ok=True)
     with open(path, "w") as f:
         json.dump(day, f)

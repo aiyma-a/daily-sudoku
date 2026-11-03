@@ -28,3 +28,29 @@ class T(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestDifficultyModel(unittest.TestCase):
+    def test_features_are_cheap_and_fixed_length(self):
+        from ml.features import features, NAMES
+        p, _, _ = S.make_puzzle("easy", "2026-01-01")
+        self.assertEqual(len(features(p)), len(NAMES))
+
+    def test_model_orders_levels(self):
+        from ml import predict
+        mean = {}
+        for lv in S.LEVELS:
+            scores = [predict.score(S.make_puzzle(lv, f"t{i}")[0]) for i in range(8)]
+            mean[lv] = sum(scores) / len(scores)
+        self.assertLess(mean["easy"], mean["medium"])
+        self.assertLess(mean["medium"], mean["hard"])
+
+    def test_pure_python_matches_sklearn(self):
+        import csv, os
+        from ml import predict
+        path = os.path.join(os.path.dirname(__file__), "ml", "data", "puzzles.csv")
+        if not os.path.exists(path):
+            self.skipTest("no training data")
+        rows = list(csv.DictReader(open(path)))[:20]
+        err = [abs(predict.score(r["puzzle"]) - float(r["effort"])) for r in rows]
+        self.assertLess(sum(err) / len(err), 20)
