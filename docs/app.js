@@ -205,6 +205,7 @@
       $("board").classList.remove("win");
       void $("board").offsetWidth; // restart the animation
       $("board").classList.add("win");
+      window.Confetti.burst();
     }
     save();
     render();
