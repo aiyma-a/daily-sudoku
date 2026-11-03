@@ -169,6 +169,7 @@
     $("hinttext").textContent = st.done ? "" : (hintText() || tip);
     tick();
     renderStreak();
+    $("share").hidden = !st.done;
   }
 
   function isDone(lv) {
@@ -252,6 +253,7 @@
       stopTimer();
       if (!st.counted) {  // learn from this solve, once
         st.counted = true;
+        st.done = true; save();
         recordSolve();
         localStorage.setItem("ds:skill", JSON.stringify(
           window.Skill.update(loadSkill(), cur.score || 70, st.elapsed, st.hints)));
@@ -336,8 +338,9 @@
 
   // ------------------------------------------- settings, sound, stats, streak
   // Everything here is stored only on the phone (localStorage).
-  const S = Object.assign({ mistakes: false, sound: false, vibe: true },
+  const S = Object.assign({ mistakes: false, sound: false, vibe: true, big: false },
     (() => { try { return JSON.parse(localStorage.getItem("ds:set")) || {}; } catch (e) { return {}; } })());
+  document.body.classList.toggle("big", S.big);
   const saveSettings = () => localStorage.setItem("ds:set", JSON.stringify(S));
 
   let audio = null;
@@ -394,7 +397,65 @@
       days = [...days, realToday].slice(-730);
       localStorage.setItem("ds:days", JSON.stringify(days));
     }
+    checkAchievements();
   }
+
+
+  // ------------------------------------------------------------ achievements
+  const ACH = [
+    ["first", "First solve", "Solve your first puzzle."],
+    ["hard", "Hard stuff", "Solve a Hard puzzle."],
+    ["nohint", "On your own", "Solve a puzzle without using hints."],
+    ["quick", "Quick", "Solve an Easy puzzle in under 4 minutes."],
+    ["ten", "Ten solved", "Solve 10 puzzles."],
+    ["streak3", "Three in a row", "Solve the Daily 3 days in a row."],
+    ["streak7", "Week streak", "Solve the Daily 7 days in a row."],
+    ["triple", "Triple", "Solve Easy, Medium and Hard of the same Daily."],
+  ];
+  let got = loadJson("ds:ach", {});
+  let toastTimer = null;
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 4000);
+  }
+  function checkAchievements() {
+    const total = LEVELS.reduce((n, lv) => n + (stats[lv] ? stats[lv].n : 0), 0);
+    const sk = streaks().cur;
+    const test = {
+      first: total >= 1,
+      hard: !!stats.hard,
+      nohint: !st.hints,
+      quick: level === "easy" && st.elapsed < 240,
+      ten: total >= 10,
+      streak3: sk >= 3,
+      streak7: sk >= 7,
+      triple: mode === "daily" && today === realToday && LEVELS.every((lv) => isDone(lv)),
+    };
+    const fresh = ACH.filter(([id]) => test[id] && !got[id]);
+    fresh.forEach(([id]) => { got[id] = realToday; });
+    if (fresh.length) {
+      localStorage.setItem("ds:ach", JSON.stringify(got));
+      toast("🏆 " + T("Achievement unlocked: {name}", { name: fresh.map((x) => T(x[1])).join(", ") }));
+    }
+  }
+
+  // ------------------------------------------------------------------ share
+  function shareText() {
+    const when = mode === "daily"
+      ? dateLabel()
+      : `${T("Practice")} #${pidx(level)}`;
+    const hints = st.hints ? T("{n} hints", { n: st.hints }) : T("no hints");
+    return `${T("Daily Sudoku")} · ${when} · ${T(cap(level))} ✅ ${fmt(st.elapsed)} · ${hints}\n${location.origin}${location.pathname}`;
+  }
+  async function share() {
+    const text = shareText();
+    try {
+      if (navigator.share) { await navigator.share({ text }); return; }
+      await navigator.clipboard.writeText(text);
+      toast(T("Copied to clipboard"));
+    } catch (e) { /* share sheet closed */ }
+  }
+  $("share").addEventListener("click", share);
 
   // ----------------------------------------------------------- pop-up pages
   function closeModal() { $("modal").hidden = true; $("modalbody").innerHTML = ""; }
@@ -424,13 +485,19 @@
         });
         b.appendChild(t);
       }
+      b.appendChild(el("h3", T("Achievements")));
+      ACH.forEach(([id, name, desc]) => {
+        const r = el("p", undefined, got[id] ? "ach on" : "ach");
+        r.textContent = `${got[id] ? "🏆" : "🔒"} ${T(name)} — ${T(desc)}`;
+        b.appendChild(r);
+      });
       b.appendChild(el("p", T("Everything stays on this phone."), "small"));
     });
   }
 
   function openSettings() {
     openModal(T("Settings"), (b) => {
-      [["mistakes", "Show mistakes in red"], ["sound", "Sound"], ["vibe", "Vibration"]].forEach(([k, label]) => {
+      [["mistakes", "Show mistakes in red"], ["sound", "Sound"], ["vibe", "Vibration"], ["big", "Bigger numbers"]].forEach(([k, label]) => {
         const row = el("div", undefined, "setrow");
         row.appendChild(el("span", T(label)));
         const btn = el("button", S[k] ? T("On") : T("Off"), "toggle");
@@ -441,6 +508,7 @@
           btn.textContent = S[k] ? T("On") : T("Off"); btn.setAttribute("aria-pressed", S[k]);
           if (k === "sound" && S.sound) feedback("tap");
           if (k === "vibe" && S.vibe) feedback("tap");
+          document.body.classList.toggle("big", S.big);
           render();
         });
         row.appendChild(btn); b.appendChild(row);
@@ -546,17 +614,20 @@
   $("next").addEventListener("click", () => stepPractice(1));
 
   // --------------------------------------------------------------- themes
-  const THEMES = ["classic", "fall", "cartoon"];
+  const THEMES = ["classic", "fall", "cartoon", "dark"];
   function setTheme(t) {
     if (!THEMES.includes(t)) t = "classic";
     document.body.dataset.theme = t;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = t === "dark" ? "#121418" : "#1a56c4";
     localStorage.setItem("ds:theme", t);
     [...$("themes").children].forEach((b) => b.classList.toggle("active", b.dataset.pick === t));
   }
   $("themes").addEventListener("click", (e) => {
     if (e.target.dataset && e.target.dataset.pick) setTheme(e.target.dataset.pick);
   });
-  setTheme(localStorage.getItem("ds:theme") || "classic");
+  setTheme(localStorage.getItem("ds:theme") ||
+    (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "classic"));
 
   $("langs").addEventListener("click", (e) => { if (e.target.dataset.lang) window.I18n.set(e.target.dataset.lang); });
   window.onLangChange = () => { closeModal(); hint = null; tip = ""; if (st) render(); updateChrome(); };
