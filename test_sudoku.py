@@ -66,3 +66,53 @@ class TestNightlyPick(unittest.TestCase):
             self.assertEqual(a[0], b[0])
             self.assertEqual(S.count_solutions(a[0], 2), 1)
             self.assertEqual(predict.level(a[3]), lv)
+
+
+class TestHintParity(unittest.TestCase):
+    def test_js_and_python_pick_same_hint(self):
+        import json, os, random, shutil, subprocess, tempfile
+        node = shutil.which("node")
+        model_path = os.path.join(os.path.dirname(__file__), "docs", "ml", "hint_model.json")
+        if not node or not os.path.exists(model_path):
+            self.skipTest("node or hint model missing")
+        from ml import hints
+        model = json.load(open(model_path))
+
+        def py_best(cells):
+            best = None
+            for m in hints.moves(cells):
+                x = hints.features(cells, m)
+                s = model["init"]
+                for t in model["trees"]:
+                    n = 0
+                    while t["l"][n] != -1:
+                        n = t["l"][n] if x[t["f"][n]] <= t["t"][n] else t["r"][n]
+                    s += model["lr"] * t["v"][n]
+                if best is None or s > best[2]:
+                    best = (m[0], m[1], s)
+            return best
+
+        rng = random.Random(5)
+        boards = []
+        for k in range(15):
+            p, _, _ = S.make_puzzle(rng.choice(list(S.LEVELS)), f"parity{k}")
+            cells = [int(c) for c in p]
+            for _ in range(rng.randint(0, 25)):
+                ms = hints.moves(cells)
+                if not ms:
+                    break
+                i, v, _h = rng.choice(ms)
+                cells[i] = v
+            if hints.moves(cells):
+                boards.append(cells)
+        expected = [py_best(b) for b in boards]
+        js = ("const H=require('./docs/hint.js');const m=require('./docs/ml/hint_model.json');"
+              "const bs=JSON.parse(process.argv[1]);"
+              "console.log(JSON.stringify(bs.map(b=>{const p=H.best(m,b);return [p.cell,p.digit,p.score]})))")
+        out = subprocess.run([node, "-e", js, json.dumps(boards)], capture_output=True,
+                             text=True, cwd=os.path.dirname(os.path.abspath(__file__)))
+        self.assertEqual(out.returncode, 0, out.stderr)
+        got = json.loads(out.stdout)
+        for e, g in zip(expected, got):
+            self.assertEqual((e[0], e[1]), (g[0], g[1]))
+            self.assertAlmostEqual(e[2], g[2], places=6)

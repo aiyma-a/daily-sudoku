@@ -26,16 +26,20 @@
 
   <div id="status"><span id="timer">0:00</span><span id="msg"></span></div>
 
+  <p id="hinttext" aria-live="polite"></p>
+
   <div id="board" role="grid" aria-label="Sudoku board"></div>
 
   <div id="tools">
     <button id="notes" aria-pressed="false">Notes: off</button>
     <button id="erase">Erase</button>
     <button id="undo">Undo</button>
+    <button id="hint">Hint</button>
   </div>
   <div id="pad"></div>
   <p id="error" hidden></p>
 </main>
+<script src="hint.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

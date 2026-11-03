@@ -19,6 +19,8 @@
   let sel = -1;
   let notesOn = false;
   let timerId = null;
+  let hint = null;      // {cell, digit, why, stage} while a hint is showing
+  let hintModel = null;
 
   const key = () => `ds:${today}:${level}`;
   const save = () => localStorage.setItem(key(), JSON.stringify(st));
@@ -97,6 +99,7 @@
         (((r / 3) | 0) === ((sr / 3) | 0) && ((c / 3) | 0) === ((sc / 3) | 0)))) cls += " peer";
       if (sv && st.vals[i] === sv && i !== sel) cls += " same";
       if (bad.has(i)) cls += " conflict";
+      if (hint && hint.cell === i && !st.vals[i]) cls += " hint";
       el.className = cls;
       if (st.vals[i]) {
         el.textContent = st.vals[i];
@@ -118,6 +121,7 @@
     $("notes").textContent = `Notes: ${notesOn ? "on" : "off"}`;
     $("notes").setAttribute("aria-pressed", notesOn);
     $("msg").textContent = st.done ? "Solved! 🎉" : "";
+    $("hinttext").textContent = st.done ? "" : hintText();
     tick();
   }
 
@@ -171,6 +175,7 @@
   }
 
   function afterMove(isUndo) {
+    hint = null;
     if (st.vals.join("") === day[level].solution) {
       st.done = true;
       stopTimer();
@@ -179,6 +184,38 @@
       $("board").classList.add("win");
     }
     save();
+    render();
+  }
+
+  // ----------------------------------------------------------------- hints
+  // A learned model ranks the moves simple logic allows and we suggest the
+  // top one (docs/hint.js). Press once to see where, again to see the digit.
+  function hintText() {
+    if (!hint) return "";
+    const where = `row ${((hint.cell / 9) | 0) + 1}, column ${(hint.cell % 9) + 1}`;
+    if (hint.none) return hint.none;
+    if (hint.stage === 2) return `Put ${hint.digit} in ${where}.`;
+    return `Look at ${where}: ${hint.why} (tap Hint again for the digit)`;
+  }
+
+  async function giveHint() {
+    if (st.done) return;
+    if (hint && hint.cell >= 0 && hint.stage === 1 && !hint.none && !st.vals[hint.cell]) {
+      hint.stage = 2; st.hints = (st.hints || 0) + 1; save(); render(); return;
+    }
+    const sol = day[level].solution;
+    const wrong = st.vals.findIndex((v, i) => v && v !== +sol[i]);
+    if (wrong >= 0) {
+      hint = { cell: wrong, none: "This number looks wrong. Erase it first." };
+      sel = wrong; render(); return;
+    }
+    if (!hintModel) hintModel = await fetch("ml/hint_model.json").then((r) => r.json());
+    const pick = window.Hint.best(hintModel, st.vals);
+    if (!pick) { hint = { cell: -1, none: "No easy move here. Try pencil notes." }; render(); return; }
+    hint = { cell: pick.cell, digit: pick.digit, stage: 1,
+      why: pick.hidden ? "one digit fits only here in its row, column or box."
+                       : "only one digit can go in this cell." };
+    sel = pick.cell;
     render();
   }
 
@@ -215,10 +252,12 @@
   $("notes").addEventListener("click", () => { notesOn = !notesOn; render(); });
   $("erase").addEventListener("click", erase);
   $("undo").addEventListener("click", undo);
+  $("hint").addEventListener("click", giveHint);
   $("levels").addEventListener("click", (e) => {
     const lv = e.target.dataset && e.target.dataset.level;
     if (!lv || lv === level) return;
     save();
+    hint = null;
     level = lv;
     localStorage.setItem("ds:level", level);
     load();
