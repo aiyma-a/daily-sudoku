@@ -131,6 +131,7 @@
   function render() {
     const cells = $("board").children;
     const bad = conflicts();
+    if (S.mistakes) for (let i = 0; i < 81; i++) if (st.vals[i] && !isGiven(i) && st.vals[i] !== +cur.solution[i]) bad.add(i);
     const sv = sel >= 0 ? st.vals[sel] : 0;
     const sr = sel >= 0 ? (sel / 9) | 0 : -1, sc = sel >= 0 ? sel % 9 : -1;
     for (let i = 0; i < 81; i++) {
@@ -167,6 +168,7 @@
     $("msg").textContent = st.done ? T("Solved! 🎉") : "";
     $("hinttext").textContent = st.done ? "" : (hintText() || tip);
     tick();
+    renderStreak();
   }
 
   function isDone(lv) {
@@ -189,6 +191,7 @@
       if (st.vals[sel]) clearPeerNotes(sel, n);
     }
     afterMove();
+    feedback("tap");
     if (!notesOn && st.vals[sel] && mistakeModel && !st.done) {
       const p = window.Mistake.pCorrect(mistakeModel, st.vals, sel, st.vals[sel]);
       if (p !== null && p < 0.4) {
@@ -215,6 +218,7 @@
     st.vals[sel] = 0;
     st.notes[sel] = 0;
     afterMove();
+    feedback("erase");
   }
 
   // Wipe everything on this puzzle (numbers, notes, timer) and start fresh.
@@ -248,6 +252,7 @@
       stopTimer();
       if (!st.counted) {  // learn from this solve, once
         st.counted = true;
+        recordSolve();
         localStorage.setItem("ds:skill", JSON.stringify(
           window.Skill.update(loadSkill(), cur.score || 70, st.elapsed, st.hints)));
       }
@@ -255,6 +260,7 @@
       void $("board").offsetWidth; // restart the animation
       $("board").classList.add("win");
       window.Confetti.burst();
+      feedback("win");
       if (mode === "practice") $("next").classList.add("pulse");
     }
     save();
@@ -327,6 +333,150 @@
     }, 1000);
   }
   function stopTimer() { if (timerId) clearInterval(timerId); timerId = null; }
+
+  // ------------------------------------------- settings, sound, stats, streak
+  // Everything here is stored only on the phone (localStorage).
+  const S = Object.assign({ mistakes: false, sound: false, vibe: true },
+    (() => { try { return JSON.parse(localStorage.getItem("ds:set")) || {}; } catch (e) { return {}; } })());
+  const saveSettings = () => localStorage.setItem("ds:set", JSON.stringify(S));
+
+  let audio = null;
+  function tone(freq, ms, delay) {
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      const t0 = audio.currentTime + (delay || 0) / 1000;
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.frequency.value = freq; o.type = "sine";
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.15, t0 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + ms / 1000);
+      o.connect(g); g.connect(audio.destination);
+      o.start(t0); o.stop(t0 + ms / 1000 + 0.02);
+    } catch (e) { /* no audio on this device */ }
+  }
+  function feedback(kind) {
+    if (S.vibe && navigator.vibrate) navigator.vibrate(kind === "win" ? [30, 40, 30, 40, 60] : kind === "erase" ? 8 : 12);
+    if (!S.sound) return;
+    if (kind === "tap") tone(660, 60);
+    else if (kind === "erase") tone(330, 70);
+    else if (kind === "win") [523, 659, 784, 1047].forEach((f, i) => tone(f, 160, i * 120));
+  }
+
+  const dayStr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const realToday = dayStr(new Date());
+  const loadJson = (k, dflt) => { try { return JSON.parse(localStorage.getItem(k)) || dflt; } catch (e) { return dflt; } };
+  let days = loadJson("ds:days", []);          // dates on which a Daily puzzle was solved
+  let stats = loadJson("ds:stats", {});         // per level: {n, total, best}
+
+  function streaks() {
+    const set = new Set(days);
+    const step = (s, k) => { const d = new Date(s + "T12:00:00"); d.setDate(d.getDate() + k); return dayStr(d); };
+    let cur = 0, s = set.has(realToday) ? realToday : step(realToday, -1);
+    while (set.has(s)) { cur++; s = step(s, -1); }
+    let best = 0, run = 0, prev = null;
+    [...set].sort().forEach((d) => { run = prev && step(prev, 1) === d ? run + 1 : 1; prev = d; best = Math.max(best, run); });
+    return { cur, best };
+  }
+  function renderStreak() {
+    const n = streaks().cur;
+    const el = $("streak");
+    el.hidden = !n;
+    el.textContent = `🔥 ${n}`;
+    el.title = T("Current streak");
+  }
+  function recordSolve() {
+    const s = stats[level] || { n: 0, total: 0, best: 0 };
+    s.n++; s.total += st.elapsed;
+    if (!s.best || st.elapsed < s.best) s.best = st.elapsed;
+    stats[level] = s;
+    localStorage.setItem("ds:stats", JSON.stringify(stats));
+    if (mode === "daily" && today === realToday && !days.includes(realToday)) {
+      days = [...days, realToday].slice(-730);
+      localStorage.setItem("ds:days", JSON.stringify(days));
+    }
+  }
+
+  // ----------------------------------------------------------- pop-up pages
+  function closeModal() { $("modal").hidden = true; $("modalbody").innerHTML = ""; }
+  function openModal(title, build) {
+    $("modaltitle").textContent = title;
+    $("modalbody").innerHTML = "";
+    build($("modalbody"));
+    $("modal").hidden = false;
+    $("modalclose").focus();
+  }
+  const el = (tag, text, cls) => { const e = document.createElement(tag); if (text !== undefined) e.textContent = text; if (cls) e.className = cls; return e; };
+
+  function openStats() {
+    openModal(T("Stats"), (b) => {
+      const sk = streaks();
+      const p = el("p", `${T("Current streak")}: ${sk.cur} ${T("days")} · ${T("Best streak")}: ${sk.best} ${T("days")}`, "big");
+      b.appendChild(p);
+      if (!LEVELS.some((lv) => stats[lv])) { b.appendChild(el("p", T("Nothing solved yet."))); }
+      else {
+        const t = el("table");
+        const hr = el("tr"); ["Level", "Solved", "Best", "Average"].forEach((h) => hr.appendChild(el("th", T(h)))); t.appendChild(hr);
+        LEVELS.forEach((lv) => {
+          const s = stats[lv]; if (!s) return;
+          const r = el("tr");
+          [T(cap(lv)), s.n, fmt(s.best), fmt(Math.round(s.total / s.n))].forEach((v) => r.appendChild(el("td", String(v))));
+          t.appendChild(r);
+        });
+        b.appendChild(t);
+      }
+      b.appendChild(el("p", T("Everything stays on this phone."), "small"));
+    });
+  }
+
+  function openSettings() {
+    openModal(T("Settings"), (b) => {
+      [["mistakes", "Show mistakes in red"], ["sound", "Sound"], ["vibe", "Vibration"]].forEach(([k, label]) => {
+        const row = el("div", undefined, "setrow");
+        row.appendChild(el("span", T(label)));
+        const btn = el("button", S[k] ? T("On") : T("Off"), "toggle");
+        btn.setAttribute("aria-pressed", S[k]);
+        btn.setAttribute("aria-label", T(label));
+        btn.addEventListener("click", () => {
+          S[k] = !S[k]; saveSettings();
+          btn.textContent = S[k] ? T("On") : T("Off"); btn.setAttribute("aria-pressed", S[k]);
+          if (k === "sound" && S.sound) feedback("tap");
+          if (k === "vibe" && S.vibe) feedback("tap");
+          render();
+        });
+        row.appendChild(btn); b.appendChild(row);
+      });
+    });
+  }
+
+  const STEPS = [
+    ["1. Fill the board", "Fill every row, column and 3×3 box with the digits 1 to 9, each only once. Tap an empty cell, then tap a number."],
+    ["2. Use notes", "Not sure? Turn on Notes and pencil in small candidate digits. They clear by themselves when you place a number."],
+    ["3. Stuck? Ask for a hint", "Tap Hint to see where to look, tap again for the digit. ★ For me picks the level that suits you. Daily is new every day; Practice never runs out and works offline."],
+  ];
+  function openTutorial() {
+    localStorage.setItem("ds:tut", "1");
+    let i = 0;
+    openModal(T("How to play"), (b) => {
+      const draw = () => {
+        b.innerHTML = "";
+        b.appendChild(el("h3", T(STEPS[i][0])));
+        b.appendChild(el("p", T(STEPS[i][1])));
+        b.appendChild(el("p", "● ".repeat(i + 1) + "○ ".repeat(STEPS.length - i - 1), "dots"));
+        const row = el("div", undefined, "setrow");
+        const skip = el("button", T("Skip")); skip.addEventListener("click", closeModal);
+        const next = el("button", i === STEPS.length - 1 ? T("Start playing") : T("Next"), "primary");
+        next.addEventListener("click", () => { if (i === STEPS.length - 1) closeModal(); else { i++; draw(); } });
+        row.appendChild(skip); row.appendChild(next); b.appendChild(row);
+      };
+      draw();
+    });
+  }
+  $("btnStats").addEventListener("click", openStats);
+  $("btnSettings").addEventListener("click", openSettings);
+  $("btnHelp").addEventListener("click", openTutorial);
+  $("modalclose").addEventListener("click", closeModal);
+  $("modal").addEventListener("click", (e) => { if (e.target === $("modal")) closeModal(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("modal").hidden) closeModal(); });
 
   // --------------------------------------------------------------- wiring
   document.addEventListener("keydown", (e) => {
@@ -409,7 +559,7 @@
   setTheme(localStorage.getItem("ds:theme") || "classic");
 
   $("langs").addEventListener("click", (e) => { if (e.target.dataset.lang) window.I18n.set(e.target.dataset.lang); });
-  window.onLangChange = () => { hint = null; tip = ""; if (st) render(); updateChrome(); };
+  window.onLangChange = () => { closeModal(); hint = null; tip = ""; if (st) render(); updateChrome(); };
 
   // ----------------------------------------------------------------- boot
   if (!LEVELS.includes(level)) level = "easy";
@@ -427,6 +577,7 @@
     }
     load();
     keepOffline();
+    if (!localStorage.getItem("ds:tut")) openTutorial();
   });
 
   // Offline support: register the service worker and save the coming days' puzzles on the phone.
