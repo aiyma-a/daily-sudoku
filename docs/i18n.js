@@ -32,10 +32,41 @@
     "Today's puzzles are not saved on this phone yet. Open the game once with internet and they will work offline too.": "Сегодняшние головоломки ещё не сохранены на телефоне. Откройте игру один раз с интернетом, и они заработают офлайн.",
     "No connection and today's puzzle is not saved yet, so here is Practice (it works offline).": "Нет сети, а сегодняшняя головоломка не сохранена, поэтому открыта Практика (она работает офлайн).",
   };
+  const KY = {
+    "Daily Sudoku": "Күндүн судокусу", "Daily": "Бүгүн", "Practice": "Машыгуу",
+    "Easy": "Жеңил", "Medium": "Орточо", "Hard": "Татаал",
+    "★ For me": "★ Мага", "Just right for you": "Сизге ылайыктуу",
+    "‹ Previous": "‹ Мурунку", "New puzzle ›": "Жаңы ›",
+    "Previous practice puzzle": "Мурунку машыгуу табышмагы", "New practice puzzle": "Жаңы машыгуу табышмагы",
+    "Sudoku board": "Судоку тактасы", "Mode": "Режим", "Difficulty": "Татаалдык", "Theme": "Тема",
+    "Notes": "Белгилер", "Erase": "Өчүрүү", "Undo": "Артка", "Hint": "Кеңеш",
+    "Classic": "Классика", "Fall": "Күз", "Cartoon": "Мультфильм",
+    "Erase everything and start over": "Баарын өчүрүп, кайра баштоо",
+    "How it works (the machine learning)": "Бул кандай иштейт (машинелик үйрөнүү, англисче)",
+    "Privacy": "Купуялык",
+    "Solved! 🎉": "Чечилди! 🎉",
+    "That one looks like a guess. Double-check its row, column and box.": "Бул божомолго окшойт. Сапты, мамычаны жана чарчыны кайра текшериңиз.",
+    "Erase everything on this puzzle and start over?": "Бул табышмактагы баарын өчүрүп, кайра баштайсызбы?",
+    "Taking a while? Tap Hint for a nudge.": "Көпкө ойлонуп жатасызбы? «Кеңеш» баскычын басыңыз.",
+    "Look at {where}: {why} (tap Hint again for the digit)": "Караңыз: {where} — {why} (санды көрүү үчүн «Кеңеш» баскычын дагы бир жолу басыңыз)",
+    "Put {d} in {where}.": "{where}: {d} санын коюңуз.",
+    "row {r}, column {c}": "{r}-сап, {c}-мамыча",
+    "This number looks wrong. Erase it first.": "Бул сан туура эмес. Адегенде өчүрүңүз.",
+    "No easy move here. Try pencil notes.": "Жөнөкөй жол жок. Белгилерди колдонуп көрүңүз.",
+    "one digit fits only here in its row, column or box.": "сапта, мамычада же чарчыда бул сан ушул жерге гана туура келет.",
+    "only one digit can go in this cell.": "бул уячага бир гана сан туура келет.",
+    "You finished all three today. Try Practice for more!": "Бүгүнкү үчөөнү тең чечтиңиз. Дагы үчүн Машыгууну байкап көрүңүз!",
+    "Just right: {lv}, about {m} min for you": "Сизге ылайыктуу: {lv}, болжол менен {m} мүн.",
+    " (learned from {n} solves).": " ({n} чечимден үйрөндү).",
+    " (a first guess; it learns as you solve).": " (алгач божомол; чечкен сайын үйрөнөт).",
+    "Today's puzzles are not saved on this phone yet. Open the game once with internet and they will work offline too.": "Бүгүнкү табышмактар бул телефонго али сакталган эмес. Оюнду интернет менен бир жолу ачыңыз, анан алар офлайн да иштейт.",
+    "No connection and today's puzzle is not saved yet, so here is Practice (it works offline).": "Интернет жок жана бүгүнкү табышмак сакталган эмес, ошондуктан Машыгуу ачылды (ал офлайн иштейт).",
+  };
+  const DICT = { ru: RU, ky: KY };
   let lang = localStorage.getItem("ds:lang");
-  if (lang !== "ru" && lang !== "en") lang = /^(ru|ky)/i.test(navigator.language || "") ? "ru" : "en";
+  if (!["en", "ru", "ky"].includes(lang)) { const n = (navigator.language || "").slice(0, 2).toLowerCase(); lang = n === "ru" || n === "ky" ? n : "en"; }
   const t = (s, p) => {
-    let out = lang === "ru" && RU[s] ? RU[s] : s;
+    let out = (DICT[lang] && DICT[lang][s]) || s;
     if (p) for (const k in p) out = out.split("{" + k + "}").join(p[k]);
     return out;
   };
@@ -47,13 +78,12 @@
       if (el.hasAttribute("title")) el.setAttribute("title", s);
     });
     const pol = document.getElementById("policy");
-    if (pol) pol.setAttribute("href", lang === "ru" ? "privacy-ru.html" : "privacy.html");
-    const lb = document.getElementById("lang");
-    if (lb) lb.textContent = lang === "ru" ? "EN" : "RU";
+    if (pol) pol.setAttribute("href", lang === "en" ? "privacy.html" : `privacy-${lang}.html`);
+    document.querySelectorAll("#langs button").forEach((b) => b.classList.toggle("active", b.dataset.lang === lang));
   }
   window.I18n = {
     t, apply, get lang() { return lang; },
-    toggle() { lang = lang === "ru" ? "en" : "ru"; localStorage.setItem("ds:lang", lang); apply(); if (window.onLangChange) window.onLangChange(); },
+    set(l) { lang = l; localStorage.setItem("ds:lang", lang); apply(); if (window.onLangChange) window.onLangChange(); },
   };
   apply();
 })();

@@ -218,4 +218,7 @@ body[data-theme="cartoon"] { background: var(--bg); }
   main { max-width: 600px; }
 }
 
-#lang { background: none; border: 1px solid var(--accent); color: var(--accent); border-radius: 99px; padding: 2px 10px; min-height: 0; font-size: .8rem; font-weight: 700; cursor: pointer; }
+#langs { white-space: nowrap; }
+#langs button + button { margin-left: 4px; }
+#langs button.active { background: var(--accent); color: #fff; }
+#langs button { background: none; border: 1px solid var(--accent); color: var(--accent); border-radius: 99px; padding: 2px 10px; min-height: 0; font-size: .8rem; font-weight: 700; cursor: pointer; }

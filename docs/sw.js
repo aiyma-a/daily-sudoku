@@ -1,11 +1,11 @@
 "use strict";
 // Service worker: keeps the game and recent puzzles on the phone so it opens
 // and plays with no connection. Bump VERSION when the file list changes.
-const VERSION = "v1s";
+const VERSION = "v1t";
 const CACHE = `daily-sudoku-${VERSION}`;
 const SHELL = [
   "./", "index.html", "style.css", "app.js", "hint.js", "engine.js", "skill.js",
-  "mistake.js", "confetti.js", "how.html", "privacy.html", "privacy-ru.html", "i18n.js", "manifest.webmanifest",
+  "mistake.js", "confetti.js", "how.html", "privacy.html", "privacy-ru.html", "privacy-ky.html", "i18n.js", "manifest.webmanifest",
   "ml/hint_model.json", "ml/mistake_model.json", "ml/difficulty_model.json",
   "ml/summary.json", "ml/importance.png", "ml/predicted_vs_real.png",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png",

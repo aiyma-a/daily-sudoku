@@ -70,13 +70,21 @@
 
   const isGiven = (i) => cur.puzzle[i] !== "0";
 
+  // Kyrgyz date words are written out here because not every phone ships Kyrgyz locale data.
+  const KY_DAYS = ["Жк", "Дш", "Шш", "Шр", "Бш", "Жм", "Иш"];
+  const KY_MONTHS = ["янв.", "фев.", "мар.", "апр.", "май", "июн.", "июл.", "авг.", "сен.", "окт.", "ноя.", "дек."];
+  function dateLabel() {
+    const d = new Date(today + "T12:00:00");
+    if (window.I18n.lang === "ky") return `${KY_DAYS[d.getDay()]}, ${d.getDate()}-${KY_MONTHS[d.getMonth()]}`;
+    return d.toLocaleDateString(window.I18n.lang === "ru" ? "ru-RU" : undefined, { weekday: "short", month: "short", day: "numeric" });
+  }
   const cap = (w) => w[0].toUpperCase() + w.slice(1);
   function updateChrome() {
     [...$("mode").children].forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
     $("pnav").hidden = mode !== "practice";
     $("prev").disabled = pidx(level) <= 1;
     $("label").textContent = mode === "daily"
-      ? new Date(today + "T12:00:00").toLocaleDateString(window.I18n.lang === "ru" ? "ru-RU" : undefined, { weekday: "short", month: "short", day: "numeric" })
+      ? dateLabel()
       : `${T(cap(level))} #${pidx(level)}`;
   }
 
@@ -400,7 +408,7 @@
   });
   setTheme(localStorage.getItem("ds:theme") || "classic");
 
-  $("lang").addEventListener("click", () => window.I18n.toggle());
+  $("langs").addEventListener("click", (e) => { if (e.target.dataset.lang) window.I18n.set(e.target.dataset.lang); });
   window.onLangChange = () => { hint = null; tip = ""; if (st) render(); updateChrome(); };
 
   // ----------------------------------------------------------------- boot
