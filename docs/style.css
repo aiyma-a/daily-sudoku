@@ -56,13 +56,13 @@ button:active { filter: brightness(.95); }
 .cell:nth-child(9n+3), .cell:nth-child(9n+6) { border-right: 2px solid var(--line-strong); }
 .cell:nth-child(n+19):nth-child(-n+27), .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid var(--line-strong); }
 .cell.given { color: var(--given); font-weight: 700; }
-.cell.entry { color: var(--entry); }
+.cell.entry { color: var(--entry); font-weight: 600; }
 .cell.peer { background: var(--peer); }
 .cell.same { background: var(--same); }
 .cell.selected { background: var(--select); }
 .cell.conflict { background: var(--conflict); color: var(--conflict-text); }
 .notes { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; height: 100%; padding: 1px; }
-.notes span { display: flex; align-items: center; justify-content: center; font-size: clamp(.5rem, 2.4vw, .75rem); color: var(--note); }
+.notes span { display: flex; align-items: center; justify-content: center; font-size: clamp(.6rem, 3.2vw, .9rem); font-weight: 600; color: var(--note); }
 
 #tools { display: flex; gap: 8px; margin: 12px 0 8px; }
 #tools button { flex: 1; }
