@@ -18,3 +18,4 @@ Make puzzles: `python3 generate.py --days 7`
 - `ml/predict.py`: runs the model with no libraries. `generate.py` stores each puzzle's predicted `score`.
 
 Retrain: `.venv/bin/python -m ml.dataset 8000 && .venv/bin/python -m ml.train` (setup: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`).
+- `ml/hints.py`, `ml/hint_data.py`, `ml/hint_train.py`: the Hint button's ranker. It lists the moves simple logic allows, scores each with trees, and suggests the best. `docs/hint.js` runs the same trees in the browser (a test checks it matches Python).
