@@ -1,0 +1,54 @@
+{
+ "difficulty": {
+  "puzzles": 8000,
+  "r2": {
+   "average (dumb baseline)": 0.0,
+   "linear on clue count": 0.317,
+   "gradient-boosted trees (shipped)": 0.806
+  },
+  "top_features": [
+   [
+    "left_after_singles",
+    0.8901
+   ],
+   [
+    "candidate_entropy",
+    0.0261
+   ],
+   [
+    "left_after_naked",
+    0.0223
+   ],
+   [
+    "avg_candidates",
+    0.0094
+   ],
+   [
+    "cells_2_cand",
+    0.0085
+   ],
+   [
+    "hidden_singles_at_start",
+    0.008
+   ]
+  ]
+ },
+ "hint": {
+  "regret": {
+   "model": 0.571,
+   "random": 1.289,
+   "first move": 1.264
+  },
+  "top1": 0.565
+ },
+ "mistake": {
+  "auc": {
+   "model": 0.892,
+   "1/candidates rule": 0.834
+  },
+  "acc": {
+   "model": 0.818,
+   "1/candidates rule": 0.742
+  }
+ }
+}

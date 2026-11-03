@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Daily Sudoku works</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  section { background: var(--board-bg); border: 1px solid var(--line); padding: 12px 14px; margin: 12px 0; border-radius: var(--radius); }
+  h2 { font-size: 1.05rem; margin: 0 0 4px; }
+  .tag { display: inline-block; font-size: .72rem; font-weight: 700; color: var(--accent); border: 1px solid var(--accent); border-radius: 99px; padding: 1px 8px; margin-bottom: 6px; }
+  p { margin: 6px 0; line-height: 1.45; font-size: .95rem; }
+  .row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: .82rem; }
+  .row .name { width: 42%; }
+  .row .bar { flex: 1; background: var(--peer); height: 14px; }
+  .row .bar i { display: block; height: 100%; background: var(--note); }
+  .row.best .bar i { background: var(--accent); }
+  .row .val { width: 3.2em; text-align: right; font-variant-numeric: tabular-nums; }
+  small { color: var(--note); }
+  img { max-width: 100%; }
+  a.back { display: inline-block; margin: 8px 0; color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="./">&larr; Back to the puzzles</a>
+  <h1>How it works</h1>
+  <p>Five small pieces of machine learning (ML) help behind the scenes. Every number below was measured on examples the model never saw during training.</p>
+
+  <section>
+    <span class="tag">Supervised learning &middot; regression</span>
+    <h2>1. Difficulty model</h2>
+    <p>Each puzzle is turned into 17 numbers (<b>feature engineering</b>), and a model of many small decision trees (<b>gradient boosting</b>) learns to predict how hard it is without solving it. How much of the real difficulty it explains (higher is better):</p>
+    <div id="diff"></div>
+    <p><small>The biggest clue it uses: how many cells are still empty after simple forced moves. Adding that feature raised the score from 43% to 81%.</small></p>
+    <img src="ml/predicted_vs_real.png" alt="Predicted vs real difficulty" width="320">
+  </section>
+
+  <section>
+    <span class="tag">Optimization</span>
+    <h2>2. Nightly puzzle picker</h2>
+    <p>Every night, 30 candidate puzzles are made per level. The difficulty model scores them and the one closest to the level's target is published. Easy stays easy, Hard stays hard.</p>
+  </section>
+
+  <section>
+    <span class="tag">Ranking</span>
+    <h2>3. Hint button</h2>
+    <p>Several moves are usually possible. A model scores each and suggests the one that unlocks the most new easy moves. Average usefulness lost compared with the best move (lower is better):</p>
+    <div id="hint"></div>
+  </section>
+
+  <section>
+    <span class="tag">Online learning</span>
+    <h2>4. Just right for you</h2>
+    <p>After every puzzle you finish, a tiny model learns how long you take at each difficulty (one small correction per solve, called <b>stochastic gradient descent</b>). It then picks the level that should take you about 8 minutes. It lives on your phone only.</p>
+    <p id="pace"><small></small></p>
+  </section>
+
+  <section>
+    <span class="tag">Classification &middot; anomaly detection</span>
+    <h2>5. Guess and stuck nudges</h2>
+    <p>A classifier estimates the chance a number you typed is right, without seeing the answer. A separate detector learns your usual pause length and speaks up only when a pause is unusual for you. Accuracy of the guess classifier:</p>
+    <div id="mist"></div>
+  </section>
+
+  <p><small>These models were trained on puzzles made by a program and on simulated play, not on real players yet. They learn your pace on this phone as you play.</small></p>
+</main>
+<script>
+  const th = localStorage.getItem("ds:theme");
+  if (th) document.body.dataset.theme = th;
+  function bars(el, rows, fmt, lowerBetter) {
+    const vals = rows.map((r) => r[1]);
+    const best = lowerBetter ? Math.min(...vals) : Math.max(...vals);
+    const max = Math.max(...vals) || 1;
+    el.innerHTML = rows.map(([n, v]) =>
+      `<div class="row${v === best ? " best" : ""}"><span class="name">${n}</span>` +
+      `<span class="bar"><i style="width:${Math.max(2, (v / max) * 100)}%"></i></span>` +
+      `<span class="val">${fmt(v)}</span></div>`).join("");
+  }
+  const pct = (v) => Math.round(v * 100) + "%";
+  fetch("ml/summary.json").then((r) => r.json()).then((s) => {
+    const d = s.difficulty.r2;
+    bars(document.getElementById("diff"), [
+      ["Guess the average", d["average (dumb baseline)"]],
+      ["Clue count only", d["linear on clue count"]],
+      ["Our model", d["gradient-boosted trees (shipped)"]]], pct, false);
+    const h = s.hint.regret;
+    bars(document.getElementById("hint"), [
+      ["Random move", h.random], ["First move found", h["first move"]], ["Our model", h.model]],
+      (v) => v.toFixed(2), true);
+    const m = s.mistake.acc;
+    bars(document.getElementById("mist"), [
+      ["Rule: 1 / options", m["1/candidates rule"]], ["Our model", m.model]], pct, false);
+  });
+  try {
+    const sk = JSON.parse(localStorage.getItem("ds:skill"));
+    const el = document.querySelector("#pace small");
+    el.textContent = sk && sk.n
+      ? `So far it has learned from ${sk.n} of your solves.`
+      : "It has not seen you solve a puzzle yet; it starts from a typical-solver guess.";
+  } catch (e) {}
+</script>
+</body>
+</html>

@@ -21,3 +21,4 @@ Retrain: `.venv/bin/python -m ml.dataset 8000 && .venv/bin/python -m ml.train` (
 - `ml/hints.py`, `ml/hint_data.py`, `ml/hint_train.py`: the Hint button's ranker. It lists the moves simple logic allows, scores each with trees, and suggests the best. `docs/hint.js` runs the same trees in the browser (a test checks it matches Python).
 - `docs/skill.js`: learns your solve-time pattern on your phone (online learning) to power "Just right for you". Scores were backfilled into older puzzle files.
 - `docs/mistake.js`, `ml/mistakes.py`, `ml/mistake_*.py`: a classifier that flags entries that look like guesses, plus an adaptive "stuck" detector that learns your usual pause length.
+- `docs/how.html` + `ml/summary.py`: the "How it works" page. After retraining, run `python3 -m ml.summary` to refresh its numbers.
