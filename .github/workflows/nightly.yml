@@ -1,0 +1,23 @@
+name: Nightly puzzles
+on:
+  schedule:
+    - cron: "0 20 * * *"   # 20:00 UTC, every day
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest
+      - run: python generate.py --days 7   # keeps a week of puzzles ahead
+      - name: Commit new puzzles
+        run: |
+          git config user.name "daily-sudoku-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/puzzles
+          git diff --cached --quiet || (git commit -m "Add puzzles for upcoming days" && git push)

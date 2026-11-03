@@ -54,3 +54,15 @@ class TestDifficultyModel(unittest.TestCase):
         rows = list(csv.DictReader(open(path)))[:20]
         err = [abs(predict.score(r["puzzle"]) - float(r["effort"])) for r in rows]
         self.assertLess(sum(err) / len(err), 20)
+
+
+class TestNightlyPick(unittest.TestCase):
+    def test_pick_matches_level_and_is_deterministic(self):
+        import generate
+        from ml import predict
+        for lv in S.LEVELS:
+            a = generate.best_puzzle(lv, "2027-02-01", n=12)
+            b = generate.best_puzzle(lv, "2027-02-01", n=12)
+            self.assertEqual(a[0], b[0])
+            self.assertEqual(S.count_solutions(a[0], 2), 1)
+            self.assertEqual(predict.level(a[3]), lv)

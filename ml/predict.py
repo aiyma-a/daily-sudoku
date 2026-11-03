@@ -10,7 +10,7 @@ _PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model.json")
 _MODEL = None
 
 # Effort ranges for each level (see ml/dataset.py for what "effort" means).
-BANDS = {"easy": (0, 50), "medium": (50, 90), "hard": (90, 165)}
+BANDS = {"easy": (0, 50), "medium": (50, 90), "hard": (90, 175)}
 
 
 def _model():
