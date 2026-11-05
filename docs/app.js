@@ -144,9 +144,13 @@
         (((r / 3) | 0) === ((sr / 3) | 0) && ((c / 3) | 0) === ((sc / 3) | 0)))) cls += " peer";
       if (sv && st.vals[i] === sv && i !== sel) cls += " same";
       if (bad.has(i)) cls += " conflict";
-      if (hint && hint.cell === i && !st.vals[i]) cls += " hint";
+      const showHint = hint && hint.cell >= 0 && !st.vals[hint.cell];
+      if (showHint && hint.zone && hint.zone.has(i)) cls += " hintzone";
+      if (showHint && hint.cell === i) cls += hint.stage === 2 ? " hint ghost" : " hint";
       el.className = cls;
-      if (st.vals[i]) {
+      if (showHint && hint.cell === i && hint.stage === 2) {
+        el.textContent = hint.digit;
+      } else if (st.vals[i]) {
         el.textContent = st.vals[i];
       } else if (st.notes[i]) {
         let h = '<div class="notes">';
@@ -311,7 +315,17 @@
     if (!hintModel) hintModel = await fetch("ml/hint_model.json").then((r) => r.json());
     const pick = window.Hint.best(hintModel, st.vals);
     if (!pick) { hint = { cell: -1, none: T("No easy move here. Try pencil notes.") }; render(); return; }
-    hint = { cell: pick.cell, digit: pick.digit, stage: 1,
+    // Shade the lines that explain the move: the row, column or box where the
+    // digit fits only here (hidden single), or every line that crosses the cell.
+    const H = window.Hint, r0 = (pick.cell / 9) | 0, c0 = pick.cell % 9;
+    const lines = [H.ROWS[r0], H.COLS[c0], H.BOXES[((r0 / 3) | 0) * 3 + ((c0 / 3) | 0)]];
+    let zone = lines;
+    if (pick.hidden) {
+      const cand = H.candidates(st.vals);
+      const only = lines.find((u) => u.every((j) => j === pick.cell || !cand.has(j) || !cand.get(j).has(pick.digit)));
+      if (only) zone = [only];
+    }
+    hint = { cell: pick.cell, digit: pick.digit, stage: 1, zone: new Set(zone.flat()),
       why: pick.hidden ? "one digit fits only here in its row, column or box."
                        : "only one digit can go in this cell." };
     sel = pick.cell;
