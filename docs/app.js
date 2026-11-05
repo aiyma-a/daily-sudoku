@@ -613,21 +613,7 @@
   $("prev").addEventListener("click", () => stepPractice(-1));
   $("next").addEventListener("click", () => stepPractice(1));
 
-  // --------------------------------------------------------------- themes
-  const THEMES = ["classic", "fall", "cartoon", "dark"];
-  function setTheme(t) {
-    if (!THEMES.includes(t)) t = "classic";
-    document.body.dataset.theme = t;
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = t === "dark" ? "#121418" : "#1a56c4";
-    localStorage.setItem("ds:theme", t);
-    [...$("themes").children].forEach((b) => b.classList.toggle("active", b.dataset.pick === t));
-  }
-  $("themes").addEventListener("click", (e) => {
-    if (e.target.dataset && e.target.dataset.pick) setTheme(e.target.dataset.pick);
-  });
-  setTheme(localStorage.getItem("ds:theme") ||
-    (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "classic"));
+  localStorage.removeItem("ds:theme");
 
   $("langs").addEventListener("click", (e) => { if (e.target.dataset.lang) window.I18n.set(e.target.dataset.lang); });
   window.onLangChange = () => { closeModal(); hint = null; tip = ""; if (st) render(); updateChrome(); };

@@ -66,8 +66,6 @@
   <p><small>These models were trained on puzzles made by a program and on simulated play, not on real players yet. They learn your pace on this phone as you play.</small></p>
 </main>
 <script>
-  const th = localStorage.getItem("ds:theme");
-  if (th) document.body.dataset.theme = th;
   function bars(el, rows, fmt, lowerBetter) {
     const vals = rows.map((r) => r[1]);
     const best = lowerBetter ? Math.min(...vals) : Math.max(...vals);

@@ -1,7 +1,7 @@
 "use strict";
 // Service worker: keeps the game and recent puzzles on the phone so it opens
 // and plays with no connection. Bump VERSION when the file list changes.
-const VERSION = "v1w";
+const VERSION = "v1x";
 const CACHE = `daily-sudoku-${VERSION}`;
 const SHELL = [
   "./", "index.html", "style.css", "app.js", "hint.js", "engine.js", "skill.js",
