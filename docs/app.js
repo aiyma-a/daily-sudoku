@@ -556,6 +556,21 @@
   $("btnStats").addEventListener("click", openStats);
   $("btnSettings").addEventListener("click", openSettings);
   $("btnHelp").addEventListener("click", openTutorial);
+
+  // Install button: Chrome/Android installs in one tap; iPhone has no such prompt, so show the steps.
+  (function setupInstall() {
+    const btn = $("btnInstall");
+    const installed = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+    if (installed) return;
+    let deferred = null;
+    window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferred = e; btn.hidden = false; });
+    window.addEventListener("appinstalled", () => { deferred = null; btn.hidden = true; });
+    if (/iphone|ipad|ipod/i.test(navigator.userAgent)) btn.hidden = false;
+    btn.addEventListener("click", () => {
+      if (deferred) { deferred.prompt(); deferred.userChoice.finally(() => { deferred = null; btn.hidden = true; }); }
+      else toast(T("On iPhone: tap Share, then Add to Home Screen."));
+    });
+  })();
   $("modalclose").addEventListener("click", closeModal);
   $("modal").addEventListener("click", (e) => { if (e.target === $("modal")) closeModal(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("modal").hidden) closeModal(); });
