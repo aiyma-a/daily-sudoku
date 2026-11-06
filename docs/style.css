@@ -223,3 +223,12 @@ body.big .notes span { font-size: clamp(.7rem, 3.6vw, 1rem); }
 #menuPanel #menu { margin: 12px 0 0; }
 #menuPanel #btnInstall { margin-top: 8px; }
 #pad { margin: 6px 0 8px; }
+
+/* Pause */
+#pauseBtn { margin-left: 8px; min-height: 28px; min-width: 36px; padding: 0 8px; font-size: .7rem; letter-spacing: -1px; border-radius: 99px; vertical-align: middle; }
+#pause { position: fixed; inset: 0; z-index: 70; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; }
+#pause[hidden] { display: none; }
+#pausecard { max-width: 320px; }
+#pausecard h2 { font-size: 1.6rem; margin: 0 0 8px; }
+#pausecard p { color: var(--note); margin: 0 0 20px; line-height: 1.4; }
+#resumeBtn { min-height: 52px; min-width: 200px; font-size: 1.1rem; font-weight: 700; background: var(--accent); color: #fff; border-color: var(--accent); border-radius: 99px; }

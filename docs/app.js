@@ -620,7 +620,27 @@
     localStorage.setItem("ds:level", level);
     load();
   });
-  document.addEventListener("visibilitychange", () => { if (st) save(); });
+  document.addEventListener("visibilitychange", () => {
+    if (st) save();
+    if (document.hidden) pauseGame();
+  });
+
+  // ------------------------------------------------- Pause / Resume
+  // Leaving the app or browser pauses the game: the board is hidden and the
+  // timer stays stopped until the player taps Resume.
+  function pauseGame() {
+    if (!st || st.done || !$("pause").hidden) return;
+    save(); stopTimer();
+    setMenu(false);
+    $("pause").hidden = false;
+    $("resumeBtn").focus();
+  }
+  function resumeGame() {
+    $("pause").hidden = true;
+    if (st && !st.done) startTimer();
+  }
+  $("pauseBtn").addEventListener("click", pauseGame);
+  $("resumeBtn").addEventListener("click", resumeGame);
 
   // ------------------------------------------------- Menu panel
   const panel = $("menuPanel"), menuBtn = $("menuBtn");
