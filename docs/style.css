@@ -143,8 +143,8 @@ button:active { filter: brightness(.95); }
 
 /* Narrow portrait phones: two-row keypad so every key is at least 44px wide */
 @media (max-width: 400px) and (orientation: portrait) {
-  #pad { gap: 3px; }
-  #pad button { font-size: 1.3rem; min-height: 54px; }
+  #pad { gap: 3px; margin: 4px 0 6px; }
+  #pad button { font-size: 1.05rem; min-height: 40px; border-radius: 6px; }
 }
 /* Only very narrow screens fall back to a two-row keypad */
 @media (max-width: 350px) and (orientation: portrait) {
