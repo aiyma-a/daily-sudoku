@@ -8,7 +8,7 @@ const SHELL = [
   "mistake.js", "confetti.js", "how.html", "privacy.html", "privacy-ru.html", "privacy-ky.html", "i18n.js", "manifest.webmanifest",
   "ml/hint_model.json", "ml/mistake_model.json", "ml/difficulty_model.json",
   "ml/summary.json", "ml/importance.png", "ml/predicted_vs_real.png",
-  "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png",
+  "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-192.png", "icons/icon-maskable-512.png", "icons/apple-touch-icon.png",
 ];
 
 self.addEventListener("install", (e) => {
