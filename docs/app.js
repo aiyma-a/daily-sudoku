@@ -15,6 +15,9 @@
   })();
 
   let day = null;       // today's puzzles {easy:{puzzle,solution,score}, ...}; null when offline and not saved
+  // ?mode=practice (used by the home-screen shortcut) opens Practice directly.
+  const qm = new URLSearchParams(location.search).get("mode");
+  if (qm === "practice" || qm === "daily") localStorage.setItem("ds:mode", qm);
   let mode = localStorage.getItem("ds:mode") === "practice" ? "practice" : "daily";
   let cur = null;       // the puzzle on screen: {puzzle, solution, score}
   let diffModel = null; // difficulty model, used to make Practice puzzles on the phone
