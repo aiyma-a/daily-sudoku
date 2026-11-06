@@ -43,7 +43,7 @@
       <button id="prev" data-i18n-label="Previous practice puzzle" aria-label="Previous practice puzzle"><span data-i18n="‹ Previous">&lsaquo; Previous</span></button>
       <button id="next" data-i18n-label="New practice puzzle" aria-label="New practice puzzle"><span data-i18n="New puzzle ›">New puzzle &rsaquo;</span></button>
     </div>
-    <div id="status"><span id="timer">0:00</span><span id="streak" hidden></span><span id="label"></span><span id="msg"></span></div>
+    <div id="status"><span id="timer">0:00</span><button id="pauseBtn" data-i18n-label="Pause" aria-label="Pause">&#10074;&#10074;</button><span id="streak" hidden></span><span id="label"></span><span id="msg"></span></div>
   </div>
 
   <p id="hinttext" aria-live="polite"></p>
@@ -66,6 +66,13 @@
   <p id="error" hidden></p>
   <p id="how"><a href="how.html" data-i18n="How it works (the machine learning)">How it works (the machine learning)</a> &middot; <a id="policy" href="privacy.html" data-i18n="Privacy">Privacy</a> &middot; <span id="langs" role="group" aria-label="Language / Тил / Язык"><button data-lang="en">EN</button><button data-lang="ru">RU</button><button data-lang="ky">KY</button></span></p>
 </main>
+<div id="pause" hidden role="dialog" aria-modal="true" aria-labelledby="pausetitle">
+  <div id="pausecard">
+    <h2 id="pausetitle" data-i18n="Paused">Paused</h2>
+    <p data-i18n="Your timer is stopped. Tap Resume when you are ready.">Your timer is stopped. Tap Resume when you are ready.</p>
+    <button id="resumeBtn" data-i18n="Resume">Resume</button>
+  </div>
+</div>
 <div id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modaltitle">
   <div id="modalcard">
     <div id="modalhead"><h2 id="modaltitle"></h2><button id="modalclose" data-i18n-label="Close" aria-label="Close">✕</button></div>
