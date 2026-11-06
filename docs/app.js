@@ -87,7 +87,7 @@
     $("pnav").hidden = mode !== "practice";
     $("prev").disabled = pidx(level) <= 1;
     $("label").textContent = mode === "daily"
-      ? dateLabel()
+      ? `${T(cap(level))} · ${dateLabel()}`
       : `${T(cap(level))} #${pidx(level)}`;
   }
 
@@ -621,6 +621,18 @@
     load();
   });
   document.addEventListener("visibilitychange", () => { if (st) save(); });
+
+  // ------------------------------------------------- Menu panel
+  const panel = $("menuPanel"), menuBtn = $("menuBtn");
+  function setMenu(open) {
+    panel.hidden = !open;
+    menuBtn.setAttribute("aria-expanded", String(open));
+  }
+  menuBtn.addEventListener("click", (e) => { e.stopPropagation(); setMenu(panel.hidden); });
+  // Pick something in the menu and it closes (the "For me" tip shows on the board).
+  panel.addEventListener("click", (e) => { if (e.target.closest("button")) setMenu(false); });
+  document.addEventListener("click", (e) => { if (!panel.hidden && !panel.contains(e.target)) setMenu(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !panel.hidden) { setMenu(false); menuBtn.focus(); } });
 
   // ------------------------------------------------- Daily / Practice menu
   function switchTo(newMode) {

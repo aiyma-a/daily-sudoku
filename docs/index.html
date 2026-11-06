@@ -13,18 +13,29 @@
 <main>
   <header id="top">
     <h1 data-i18n="Daily Sudoku">Daily Sudoku</h1>
+    <button id="menuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="menuPanel" data-i18n-label="Menu" aria-label="Menu"><span aria-hidden="true">&#9776;</span> <span data-i18n="Menu">Menu</span></button>
+  </header>
+  <div id="menuPanel" hidden role="region" data-i18n-label="Menu" aria-label="Menu">
+    <h2 class="mh" data-i18n="Mode">Mode</h2>
     <div id="mode" role="group" data-i18n-label="Mode" aria-label="Mode">
       <button data-mode="daily" data-i18n="Daily">Daily</button>
       <button data-mode="practice" data-i18n="Practice">Practice</button>
     </div>
-  </header>
-  <div id="levelrow">
-  <nav id="levels" data-i18n-label="Difficulty" aria-label="Difficulty">
-    <button data-level="easy" data-i18n="Easy">Easy</button>
-    <button data-level="medium" data-i18n="Medium">Medium</button>
-    <button data-level="hard" data-i18n="Hard">Hard</button>
-  </nav>
-  <button id="fit" data-i18n-label="Just right for you" aria-label="Just right for you" title="Just right for you"><span data-i18n="★ For me">★ For me</span></button>
+    <h2 class="mh" data-i18n="Difficulty">Difficulty</h2>
+    <div id="levelrow">
+      <nav id="levels" data-i18n-label="Difficulty" aria-label="Difficulty">
+        <button data-level="easy" data-i18n="Easy">Easy</button>
+        <button data-level="medium" data-i18n="Medium">Medium</button>
+        <button data-level="hard" data-i18n="Hard">Hard</button>
+      </nav>
+      <button id="fit" data-i18n-label="Just right for you" aria-label="Just right for you" title="Just right for you"><span data-i18n="★ For me">★ For me</span></button>
+    </div>
+    <div id="menu">
+      <button id="btnStats" data-i18n="Stats">Stats</button>
+      <button id="btnSettings" data-i18n="Settings">Settings</button>
+      <button id="btnHelp" data-i18n="How to play">How to play</button>
+    </div>
+    <button id="btnInstall" hidden data-i18n="Install app">Install app</button>
   </div>
 
   <div id="sub">
@@ -39,6 +50,8 @@
   <button id="share" hidden data-i18n="Share">Share</button>
   <div id="toast" role="status" aria-live="polite" hidden></div>
 
+  <div id="pad"></div>
+
   <div id="board" role="grid" data-i18n-label="Sudoku board" aria-label="Sudoku board"></div>
 
   <div id="tools">
@@ -47,14 +60,7 @@
     <button id="undo" data-i18n="Undo">Undo</button>
     <button id="hint" data-i18n="Hint">Hint</button>
   </div>
-  <div id="pad"></div>
   <div id="more">
-    <div id="menu">
-      <button id="btnStats" data-i18n="Stats">Stats</button>
-      <button id="btnSettings" data-i18n="Settings">Settings</button>
-      <button id="btnHelp" data-i18n="How to play">How to play</button>
-    </div>
-    <button id="btnInstall" hidden data-i18n="Install app">Install app</button>
     <button id="reset" data-i18n="Erase everything and start over">Erase everything and start over</button>
   </div>
   <p id="error" hidden></p>
