@@ -1,7 +1,7 @@
 "use strict";
 // Service worker: keeps the game and recent puzzles on the phone so it opens
 // and plays with no connection. Bump VERSION when the file list changes.
-const VERSION = "v1zc";
+const VERSION = "v1zd";
 const CACHE = `daily-sudoku-${VERSION}`;
 const SHELL = [
   "./", "index.html", "style.css", "app.js", "hint.js", "engine.js", "skill.js",
@@ -14,7 +14,7 @@ const SHELL = [
 self.addEventListener("install", (e) => {
   e.waitUntil(
     caches.open(CACHE)
-      .then((c) => Promise.allSettled(SHELL.map((u) => c.add(u))))  // one missing file must not block the rest
+      .then((c) => Promise.allSettled(SHELL.map((u) => c.add(new Request(u, { cache: "reload" })))))  // one missing file must not block the rest
       .then(() => self.skipWaiting())
   );
 });
@@ -43,14 +43,13 @@ self.addEventListener("fetch", (e) => {
     );
     return;
   }
-  // Everything else: show the saved copy instantly, refresh it in the background.
+  // Game files: network first (revalidated, so index.html, app.js and style.css
+  // always come from the same release), saved copy only when offline.
   e.respondWith(
-    caches.match(req, { ignoreSearch: true }).then((hit) => {
-      const net = fetch(req).then((res) => {
-        if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
-        return res;
-      }).catch(() => hit || (req.mode === "navigate" ? caches.match("index.html") : undefined));
-      return hit || net;
-    })
+    fetch(req, { cache: "no-cache" }).then((res) => {
+      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
+      return res;
+    }).catch(() => caches.match(req, { ignoreSearch: true }).then((hit) =>
+      hit || (req.mode === "navigate" ? caches.match("index.html") : undefined)))
   );
 });
