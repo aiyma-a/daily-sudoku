@@ -109,6 +109,8 @@ button:active { filter: brightness(.95); }
 @keyframes hintbtn { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent); } }
 #how { text-align: center; margin: 14px 0 0; font-size: .85rem; }
 #how a { color: var(--accent); }
+#btnInstall { width: 100%; margin: 6px 0 0; min-height: 44px; padding: 10px; font-size: .95rem; font-weight: 600; }
+#btnInstall[hidden] { display: none; }
 #reset { width: 100%; margin: 6px 0 0; min-height: 44px; padding: 10px; font-size: .9rem; color: var(--conflict-text); }
 
 #status { margin: 2px 2px; }
