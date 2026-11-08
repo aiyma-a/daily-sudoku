@@ -100,7 +100,12 @@
       c.className = "cell";
       c.dataset.i = i;
       c.setAttribute("role", "gridcell");
+      c.tabIndex = i === 0 ? 0 : -1;   // one tab stop; arrow keys move inside the board
       c.addEventListener("click", () => { sel = i; render(); });
+      c.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sel = i; render(); }
+      });
+      c.addEventListener("focus", () => { if (sel !== i) { sel = i; render(); } });
       b.appendChild(c);
     }
     const pad = $("pad");
@@ -151,6 +156,14 @@
       if (showHint && hint.zone && hint.zone.has(i)) cls += " hintzone";
       if (showHint && hint.cell === i) cls += hint.stage === 2 ? " hint ghost" : " hint";
       el.className = cls;
+      el.tabIndex = (sel >= 0 ? i === sel : i === 0) ? 0 : -1;
+      el.setAttribute("aria-selected", i === sel);
+      let lab = T("row {r}, column {c}", { r: r + 1, c: c + 1 }) + ": ";
+      if (st.vals[i]) lab += st.vals[i] + (isGiven(i) ? ", " + T("given") : "");
+      else if (st.notes[i]) { const l = []; for (let n = 1; n <= 9; n++) if (st.notes[i] & (1 << n)) l.push(n); lab += T("notes: {list}", { list: l.join(" ") }); }
+      else lab += T("empty");
+      if (bad.has(i)) lab += ", " + T("conflict");
+      el.setAttribute("aria-label", lab);
       if (showHint && hint.cell === i && hint.stage === 2) {
         el.textContent = hint.digit;
       } else if (st.vals[i]) {
@@ -168,6 +181,7 @@
     [...$("pad").children].forEach((b) => {
       const left = Math.max(0, 9 - counts[+b.dataset.n]);
       b.classList.toggle("used", left === 0);
+      b.setAttribute("aria-label", b.dataset.n + ", " + (left ? T("{n} left", { n: left }) : T("all placed")));
       b.dataset.left = left; // shown as a small badge: how many of this digit are still to place
     });
     [...$("levels").children].forEach((b) => {
@@ -543,8 +557,15 @@
   $("savePic").addEventListener("click", savePicture);
 
   // ----------------------------------------------------------- pop-up pages
-  function closeModal() { $("modal").hidden = true; $("modalbody").innerHTML = ""; }
+  let modalOpener = null;
+  function closeModal() {
+    $("modal").hidden = true; $("modalbody").innerHTML = "";
+    // The opener may be inside the closed Menu: then focus the Menu button.
+    if (modalOpener && modalOpener.offsetParent) modalOpener.focus(); else $("menuBtn").focus();
+    modalOpener = null;
+  }
   function openModal(title, build) {
+    if ($("modal").hidden) modalOpener = document.activeElement;
     $("modaltitle").textContent = title;
     $("modalbody").innerHTML = "";
     build($("modalbody"));
@@ -706,18 +727,31 @@
   $("modalclose").addEventListener("click", closeModal);
   $("modal").addEventListener("click", (e) => { if (e.target === $("modal")) closeModal(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("modal").hidden) closeModal(); });
+  // Keep Tab inside an open dialog (pop-up page or Pause screen).
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Tab") return;
+    const dlg = !$("pause").hidden ? $("pause") : !$("modal").hidden ? $("modal") : null;
+    if (!dlg) return;
+    const f = [...dlg.querySelectorAll("button:not([disabled]), a[href], input, select")].filter((x) => x.offsetParent !== null);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (!dlg.contains(document.activeElement)) { first.focus(); e.preventDefault(); }
+    else if (e.shiftKey && document.activeElement === first) { last.focus(); e.preventDefault(); }
+    else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
+  });
 
   // --------------------------------------------------------------- wiring
   document.addEventListener("keydown", (e) => {
+    if (!$("modal").hidden || !$("pause").hidden) return;   // a dialog is open: keys belong to it
     if (e.key >= "1" && e.key <= "9") input(+e.key);
     else if (e.key === "Backspace" || e.key === "Delete" || e.key === "0") erase();
     else if (e.key === "n" || e.key === "N") { notesOn = !notesOn; render(); }
     else if (e.key === "z" && (e.ctrlKey || e.metaKey)) undo();
-    else if (e.key.startsWith("Arrow") && sel >= 0) {
+    else if (e.key.startsWith("Arrow") && sel >= 0 && panel.hidden) {
       const d = { ArrowUp: -9, ArrowDown: 9, ArrowLeft: -1, ArrowRight: 1 }[e.key];
       const n = sel + d;
       const wrapsRow = Math.abs(d) === 1 && ((n / 9) | 0) !== ((sel / 9) | 0);
-      if (n >= 0 && n < 81 && !wrapsRow) { sel = n; render(); e.preventDefault(); }
+      if (n >= 0 && n < 81 && !wrapsRow) { sel = n; render(); $("board").children[n].focus(); e.preventDefault(); }
     }
   });
   $("notes").addEventListener("click", () => { notesOn = !notesOn; render(); });
@@ -757,15 +791,19 @@
   // ------------------------------------------------- Pause / Resume
   // Leaving the app or browser pauses the game: the board is hidden and the
   // timer stays stopped until the player taps Resume.
+  let pauseOpener = null;
   function pauseGame() {
     if (!st || st.done || !$("pause").hidden) return;
     save(); stopTimer();
     setMenu(false);
+    pauseOpener = document.activeElement;
     $("pause").hidden = false;
     $("resumeBtn").focus();
   }
   function resumeGame() {
     $("pause").hidden = true;
+    if (pauseOpener && document.contains(pauseOpener) && pauseOpener !== document.body) pauseOpener.focus();
+    pauseOpener = null;
     if (st && !st.done) startTimer();
   }
   $("pauseBtn").addEventListener("click", pauseGame);

@@ -91,6 +91,7 @@
     " (a first guess; it learns as you solve).": " (пока наугад; подстраивается по мере решения).",
     "Today's puzzles are not saved on this phone yet. Open the game once with internet and they will work offline too.": "Сегодняшние головоломки ещё не сохранены на телефоне. Откройте игру один раз с интернетом, и они заработают офлайн.",
     "No connection and today's puzzle is not saved yet, so here is Practice (it works offline).": "Нет сети, а сегодняшняя головоломка не сохранена, поэтому открыта Практика (она работает офлайн).",
+    "given": "задано", "empty": "пусто", "conflict": "повтор", "notes: {list}": "заметки: {list}", "{n} left": "осталось: {n}", "all placed": "все поставлены", "Number pad": "Цифры",
   };
   const KY = {
     "Share": "Бөлүшүү",
@@ -181,6 +182,7 @@
     " (a first guess; it learns as you solve).": " (алгач божомол; чечкен сайын үйрөнөт).",
     "Today's puzzles are not saved on this phone yet. Open the game once with internet and they will work offline too.": "Бүгүнкү табышмактар бул телефонго али сакталган эмес. Оюнду интернет менен бир жолу ачыңыз, анан алар офлайн да иштейт.",
     "No connection and today's puzzle is not saved yet, so here is Practice (it works offline).": "Интернет жок жана бүгүнкү табышмак сакталган эмес, ошондуктан Машыгуу ачылды (ал офлайн иштейт).",
+    "given": "берилген", "empty": "бош", "conflict": "кайталанды", "notes: {list}": "белгилер: {list}", "{n} left": "калды: {n}", "all placed": "баары коюлду", "Number pad": "Сандар",
   };
   const DICT = { ru: RU, ky: KY };
   let lang = localStorage.getItem("ds:lang");
