@@ -165,7 +165,11 @@
     }
     const counts = Array(10).fill(0);
     st.vals.forEach((x) => counts[x]++);
-    [...$("pad").children].forEach((b) => b.classList.toggle("used", counts[+b.dataset.n] >= 9));
+    [...$("pad").children].forEach((b) => {
+      const left = Math.max(0, 9 - counts[+b.dataset.n]);
+      b.classList.toggle("used", left === 0);
+      b.dataset.left = left; // shown as a small badge: how many of this digit are still to place
+    });
     [...$("levels").children].forEach((b) => {
       b.classList.toggle("active", b.dataset.level === level);
       b.classList.toggle("done", isDone(b.dataset.level));
