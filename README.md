@@ -28,3 +28,7 @@ Retrain: `.venv/bin/python -m ml.dataset 8000 && .venv/bin/python -m ml.train` (
 
 - `python3 -m unittest`: puzzle maker, rater, models, and the JS-port match.
 - `npm ci && npm test`: opens the game in Chrome at phone size and plays it (`tests/e2e/run.cjs`): board, keyboard, notes, hints, pause, stats, calendar, settings, share picture, Practice, languages, offline. Needs Google Chrome. Both run on every pull request (`.github/workflows/test.yml`).
+
+## Phone-side files (`docs/`)
+
+`app.js` is the game itself (board, moves, hints, timer, Pause, menu). Pages and helpers live next to it: `store.js` (all saved data), `stats.js` (streaks, achievements, Stats page), `share.js` (Share and result picture), `calendar.js`, `settings.js`. Each page file is a function that `app.js` calls once with the shared pieces. When you add a file, add it to `index.html` and to `SHELL` in `sw.js` (and bump `VERSION`).

@@ -178,6 +178,22 @@ const ok = (c, msg) => { if (!c) throw new Error(msg || "check failed"); };
     ok(fs.readFileSync(f).subarray(1, 4).toString() === "PNG", "not a PNG");
   });
 
+  await check("Share builds the picture and text (no crash without a share sheet)", async () => {
+    await page.evaluate(() => { window.__shared = null; navigator.share = async (d) => { window.__shared = d; }; navigator.canShare = () => true; });
+    await page.click("#share");
+    await page.waitForFunction(() => window.__shared);
+    const d = await page.evaluate(() => ({ text: window.__shared.text, file: window.__shared.files && window.__shared.files[0].type }));
+    ok(/Daily Sudoku/.test(d.text) && /Easy/.test(d.text), d.text);
+    ok(d.file === "image/png", "no picture attached");
+  });
+
+  await check("Solving unlocks achievements, shown on the Stats page", async () => {
+    await menu("#btnStats");
+    const t = await page.textContent("#modalbody");
+    ok(/🏆 First solve/.test(t), "First solve not unlocked");
+    await closeModal();
+  });
+
   await check("Stats show the solved puzzle and a streak", async () => {
     await menu("#btnStats");
     const t = await page.textContent("#modalbody");
