@@ -23,3 +23,8 @@ Retrain: `.venv/bin/python -m ml.dataset 8000 && .venv/bin/python -m ml.train` (
 - `docs/mistake.js`, `ml/mistakes.py`, `ml/mistake_*.py`: a classifier that flags entries that look like guesses, plus an adaptive "stuck" detector that learns your usual pause length.
 - `docs/how.html` + `ml/summary.py`: the "How it works" page. After retraining, run `python3 -m ml.summary` to refresh its numbers.
 - Practice mode (offline): `docs/engine.js` is a JavaScript port of the generator, rater and difficulty features, so the phone makes numbered puzzles itself. `docs/sw.js` + `docs/manifest.webmanifest` make the game installable and keep the app and the coming days offline. A test checks the JS port matches Python.
+
+## Tests
+
+- `python3 -m unittest`: puzzle maker, rater, models, and the JS-port match.
+- `npm ci && npm test`: opens the game in Chrome at phone size and plays it (`tests/e2e/run.cjs`): board, keyboard, notes, hints, pause, stats, calendar, settings, share picture, Practice, languages, offline. Needs Google Chrome. Both run on every pull request (`.github/workflows/test.yml`).

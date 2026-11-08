@@ -1,0 +1,7 @@
+{
+  "name": "daily-sudoku",
+  "private": true,
+  "description": "Browser test for the phone side of Daily Sudoku",
+  "scripts": { "test": "node tests/e2e/run.cjs" },
+  "devDependencies": { "playwright-core": "1.56.1" }
+}
