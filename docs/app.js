@@ -1,6 +1,7 @@
 "use strict";
 (function () {
   const T = window.I18n.t;
+  const Store = window.Store;
   const $ = (id) => document.getElementById(id);
   const LEVELS = ["easy", "medium", "hard"];
 
@@ -17,13 +18,13 @@
   let day = null;       // today's puzzles {easy:{puzzle,solution,score}, ...}; null when offline and not saved
   // ?mode=practice (used by the home-screen shortcut) opens Practice directly.
   const qm = new URLSearchParams(location.search).get("mode");
-  if (qm === "practice" || qm === "daily") localStorage.setItem("ds:mode", qm);
-  let mode = localStorage.getItem("ds:mode") === "practice" ? "practice" : "daily";
+  if (qm === "practice" || qm === "daily") Store.set("ds:mode", qm);
+  let mode = Store.get("ds:mode") === "practice" ? "practice" : "daily";
   let cur = null;       // the puzzle on screen: {puzzle, solution, score}
   let diffModel = null; // difficulty model, used to make Practice puzzles on the phone
-  const pidx = (lv) => +localStorage.getItem(`ds:pidx:${lv}`) || 1;   // Practice puzzle number per level
+  const pidx = (lv) => +Store.get(`ds:pidx:${lv}`) || 1;   // Practice puzzle number per level
   const TYPICAL = { easy: 40, medium: 65, hard: 135 };               // difficulty scores for guessing in Practice
-  let level = localStorage.getItem("ds:level") || "easy";
+  let level = Store.get("ds:level") || "easy";
   let st = null;        // game state for current level
   let sel = -1;
   let notesOn = false;
@@ -31,17 +32,14 @@
   let hint = null;      // {cell, digit, why, stage} while a hint is showing
   let hintModel = null;
   let mistakeModel = null;
-  let pace = JSON.parse(localStorage.getItem("ds:pace") || "null") || { ...window.Mistake.PACE };
+  let pace = Store.json("ds:pace", { ...window.Mistake.PACE });
   let lastMove = 0;     // st.elapsed at the last move
   let tip = "";         // message from "Just right for you"
-  const loadSkill = () => {
-    try { return JSON.parse(localStorage.getItem("ds:skill")) || { ...window.Skill.PRIOR }; }
-    catch (e) { return { ...window.Skill.PRIOR }; }
-  };
+  const loadSkill = () => Store.json("ds:skill", { ...window.Skill.PRIOR });
 
   const keyFor = (lv) => mode === "practice" ? `ds:p:${lv}:${pidx(lv)}` : `ds:${today}:${lv}`;
   const key = () => keyFor(level);
-  const save = () => { if (st) localStorage.setItem(key(), JSON.stringify(st)); };
+  const save = () => { if (st) Store.setJson(key(), st); };
 
   function fresh() {
     const p = cur.puzzle;
@@ -63,8 +61,7 @@
     if (mode === "daily" && !day) { mode = "practice"; }
     pickPuzzle();
     updateChrome();
-    const raw = localStorage.getItem(key());
-    st = raw ? JSON.parse(raw) : fresh();
+    st = Store.json(key(), null) || fresh();
     sel = -1;
     lastMove = st.elapsed;
     render();
@@ -199,10 +196,7 @@
   }
 
   function isDone(lv) {
-    try {
-      const raw = localStorage.getItem(keyFor(lv));
-      return raw ? JSON.parse(raw).done : false;
-    } catch (e) { return false; }
+    return !!Store.json(keyFor(lv), {}).done;
   }
 
   // ------------------------------------------------------------- gameplay
@@ -305,8 +299,8 @@
         st.counted = true;
         st.done = true; save();
         recordSolve();
-        localStorage.setItem("ds:skill", JSON.stringify(
-          window.Skill.update(loadSkill(), cur.score || 70, st.elapsed, st.hints)));
+        Store.setJson("ds:skill",
+          window.Skill.update(loadSkill(), cur.score || 70, st.elapsed, st.hints));
       }
       $("board").classList.remove("win");
       void $("board").offsetWidth; // restart the animation
@@ -324,7 +318,7 @@
     const gap = st.elapsed - lastMove;
     if (gap > 0) pace = window.Mistake.paceUpdate(pace, gap);
     lastMove = st.elapsed;
-    localStorage.setItem("ds:pace", JSON.stringify(pace));
+    Store.setJson("ds:pace", pace);
     $("hint").classList.remove("pulse");
   }
   function checkStuck() {
@@ -399,9 +393,9 @@
   // ------------------------------------------- settings, sound, stats, streak
   // Everything here is stored only on the phone (localStorage).
   const S = Object.assign({ mistakes: false, sound: false, vibe: true, big: false },
-    (() => { try { return JSON.parse(localStorage.getItem("ds:set")) || {}; } catch (e) { return {}; } })());
+    Store.json("ds:set", {}));
   document.body.classList.toggle("big", S.big);
-  const saveSettings = () => localStorage.setItem("ds:set", JSON.stringify(S));
+  const saveSettings = () => Store.setJson("ds:set", S);
 
   let audio = null;
   function tone(freq, ms, delay) {
@@ -427,9 +421,8 @@
 
   const dayStr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const realToday = dayStr(new Date());
-  const loadJson = (k, dflt) => { try { return JSON.parse(localStorage.getItem(k)) || dflt; } catch (e) { return dflt; } };
-  let days = loadJson("ds:days", []);          // dates on which a Daily puzzle was solved
-  let stats = loadJson("ds:stats", {});         // per level: {n, total, best}
+  let days = Store.json("ds:days", []);          // dates on which a Daily puzzle was solved
+  let stats = Store.json("ds:stats", {});         // per level: {n, total, best}
 
   function streaks() {
     const set = new Set(days);
@@ -452,10 +445,10 @@
     s.n++; s.total += st.elapsed;
     if (!s.best || st.elapsed < s.best) s.best = st.elapsed;
     stats[level] = s;
-    localStorage.setItem("ds:stats", JSON.stringify(stats));
+    Store.setJson("ds:stats", stats);
     if (mode === "daily" && today === realToday && !days.includes(realToday)) {
       days = [...days, realToday].slice(-730);
-      localStorage.setItem("ds:days", JSON.stringify(days));
+      Store.setJson("ds:days", days);
     }
     checkAchievements();
   }
@@ -472,7 +465,7 @@
     ["streak7", "Week streak", "Solve the Daily 7 days in a row."],
     ["triple", "Triple", "Solve Easy, Medium and Hard of the same Daily."],
   ];
-  let got = loadJson("ds:ach", {});
+  let got = Store.json("ds:ach", {});
   let toastTimer = null;
   function toast(msg) {
     const t = $("toast"); t.textContent = msg; t.hidden = false;
@@ -494,7 +487,7 @@
     const fresh = ACH.filter(([id]) => test[id] && !got[id]);
     fresh.forEach(([id]) => { got[id] = realToday; });
     if (fresh.length) {
-      localStorage.setItem("ds:ach", JSON.stringify(got));
+      Store.setJson("ds:ach", got);
       toast("🏆 " + T("Achievement unlocked: {name}", { name: fresh.map((x) => T(x[1])).join(", ") }));
     }
   }
@@ -606,7 +599,7 @@
   // game already supports. Replays never touch the streak (see recordSolve).
   const WD = { en: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"], ru: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"], ky: ["Дш", "Шш", "Шр", "Бш", "Жм", "Иш", "Жк"] };
   const daySolved = (d) => {
-    const n = LEVELS.filter((lv) => { try { return (JSON.parse(localStorage.getItem(`ds:${d}:${lv}`)) || {}).done; } catch (e) { return false; } }).length;
+    const n = LEVELS.filter((lv) => Store.json(`ds:${d}:${lv}`, {}).done).length;
     return n === 0 ? "" : n === LEVELS.length ? "full" : "part";
   };
   function monthTitle(y, m) {
@@ -689,7 +682,7 @@
     ["3. Stuck? Ask for a hint", "Tap Hint to see where to look, tap again for the digit. ★ For me picks the level that suits you. Daily is new every day; Practice never runs out and works offline."],
   ];
   function openTutorial() {
-    localStorage.setItem("ds:tut", "1");
+    Store.set("ds:tut", "1");
     let i = 0;
     openModal(T("How to play"), (b) => {
       const draw = () => {
@@ -770,7 +763,7 @@
     tip = T("Just right: {lv}, about {m} min for you", { lv: T(cap(r.level)), m: mins }) +
       (m.n ? T(" (learned from {n} solves).", { n: m.n }) : T(" (a first guess; it learns as you solve)."));
     if (r.level !== level) {
-      save(); hint = null; level = r.level; localStorage.setItem("ds:level", level); load();
+      save(); hint = null; level = r.level; Store.set("ds:level", level); load();
     } else render();
   });
   $("levels").addEventListener("click", (e) => {
@@ -780,7 +773,7 @@
     hint = null;
     tip = "";
     level = lv;
-    localStorage.setItem("ds:level", level);
+    Store.set("ds:level", level);
     load();
   });
   document.addEventListener("visibilitychange", () => {
@@ -829,13 +822,13 @@
     }
     if (newMode === mode) return;
     save();
-    mode = newMode; localStorage.setItem("ds:mode", mode);
+    mode = newMode; Store.set("ds:mode", mode);
     hint = null; tip = "";
     load();
   }
   function stepPractice(d) {
     save();
-    localStorage.setItem(`ds:pidx:${level}`, Math.max(1, pidx(level) + d));
+    Store.set(`ds:pidx:${level}`, Math.max(1, pidx(level) + d));
     hint = null; tip = "";
     $("next").classList.remove("pulse");
     load();
@@ -844,7 +837,7 @@
   $("prev").addEventListener("click", () => stepPractice(-1));
   $("next").addEventListener("click", () => stepPractice(1));
 
-  localStorage.removeItem("ds:theme");
+  Store.remove("ds:theme");
 
   $("langs").addEventListener("click", (e) => { if (e.target.dataset.lang) window.I18n.set(e.target.dataset.lang); });
   window.onLangChange = () => { closeModal(); hint = null; tip = ""; if (st) render(); updateChrome(); };
@@ -865,7 +858,7 @@
     }
     load();
     keepOffline();
-    if (!localStorage.getItem("ds:tut")) openTutorial();
+    if (!Store.get("ds:tut")) openTutorial();
   });
 
   // Offline support: register the service worker and save the coming days' puzzles on the phone.
