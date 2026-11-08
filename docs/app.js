@@ -796,7 +796,11 @@
     navigator.serviceWorker.register("sw.js").catch(() => {});
     // Once the service worker is in charge, ask for the coming days so it saves them.
     navigator.serviceWorker.ready.then(() => getJson("puzzles/index.json", { cache: "no-store" })).then((list) => {
-      list.filter((d) => d >= today).slice(0, 14).forEach((d) => fetch(`puzzles/${d}.json`).catch(() => {}));
+      // Save the next 253 days (about 700 bytes each), skipping ones already saved.
+      list.filter((d) => d >= today).slice(0, 254).forEach((d) => {
+        const url = `puzzles/${d}.json`;
+        caches.match(url).then((hit) => { if (!hit) return fetch(url); }).catch(() => {});
+      });
     }).catch(() => {});
   }
 })();
