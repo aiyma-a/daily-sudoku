@@ -250,10 +250,34 @@
   function undo() {
     const h = st.history.pop();
     if (!h || st.done) return;
-    st.vals[h.i] = h.v;
-    st.notes[h.i] = h.n;
+    // A step is one cell {i, v, n}, or a group of cells {group: [...]} (Fill all notes).
+    (h.group || [h]).forEach((c) => { st.vals[c.i] = c.v; st.notes[c.i] = c.n; });
     afterMove(true);
   }
+
+  // Pencil in every digit that still fits each empty cell. One Undo takes it all back.
+  function fillNotes() {
+    if (st.done || !st.vals.includes(0)) return;
+    const group = [];
+    for (let i = 0; i < 81; i++) {
+      if (st.vals[i]) continue;
+      const r = (i / 9) | 0, c = i % 9, br = r - (r % 3), bc = c - (c % 3);
+      let used = 0;
+      for (let k = 0; k < 9; k++) {
+        used |= 1 << st.vals[r * 9 + k];
+        used |= 1 << st.vals[k * 9 + c];
+        used |= 1 << st.vals[(br + ((k / 3) | 0)) * 9 + bc + (k % 3)];
+      }
+      let mask = 0;
+      for (let n = 1; n <= 9; n++) if (!(used & (1 << n))) mask |= 1 << n;
+      if (mask !== st.notes[i]) { group.push({ i, v: 0, n: st.notes[i] }); st.notes[i] = mask; }
+    }
+    if (!group.length) return;
+    st.history.push({ group });
+    afterMove();
+    feedback("tap");
+  }
+  $("btnFillNotes").addEventListener("click", fillNotes);
 
   function afterMove(isUndo) {
     hint = null;
