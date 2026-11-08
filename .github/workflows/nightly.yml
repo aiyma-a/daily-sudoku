@@ -14,7 +14,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m unittest
-      - run: python generate.py --days 7   # keeps a week of puzzles ahead
+      - run: python generate.py --days 253   # keeps 253 days of puzzles ahead
       - name: Commit new puzzles
         run: |
           git config user.name "daily-sudoku-bot"
