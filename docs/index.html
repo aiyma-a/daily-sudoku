@@ -45,7 +45,7 @@
       <button id="prev" data-i18n-label="Previous practice puzzle" aria-label="Previous practice puzzle"><span data-i18n="‹ Previous">&lsaquo; Previous</span></button>
       <button id="next" data-i18n-label="New practice puzzle" aria-label="New practice puzzle"><span data-i18n="New puzzle ›">New puzzle &rsaquo;</span></button>
     </div>
-    <div id="status"><span id="timer">0:00</span><button id="pauseBtn" data-i18n-label="Pause" aria-label="Pause">&#10074;&#10074;</button><span id="streak" hidden></span><span id="label"></span><span id="msg"></span></div>
+    <div id="status"><span id="timer">0:00</span><button id="pauseBtn" data-i18n-label="Pause" aria-label="Pause">&#10074;&#10074;</button><span id="streak" hidden></span><span id="label"></span><span id="msg" role="status" aria-live="polite"></span></div>
   </div>
 
   <p id="hinttext" aria-live="polite"></p>
@@ -53,7 +53,7 @@
   <button id="savePic" hidden data-i18n="Save picture">Save picture</button>
   <div id="toast" role="status" aria-live="polite" hidden></div>
 
-  <div id="pad"></div>
+  <div id="pad" role="group" data-i18n-label="Number pad" aria-label="Number pad"></div>
 
   <div id="board" role="grid" data-i18n-label="Sudoku board" aria-label="Sudoku board"></div>
 

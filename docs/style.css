@@ -86,7 +86,7 @@ button:active { filter: brightness(.95); }
 #pad { display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; }
 #pad button { padding: 0; min-height: 52px; font-size: 1.35rem; position: relative; }
 #pad button.used { opacity: .35; }
-#pad button::after { content: attr(data-left); position: absolute; top: 2px; right: 4px; font-size: .62rem; font-weight: 600; line-height: 1; opacity: .55; }
+#pad button::after { content: attr(data-left); position: absolute; top: 2px; right: 4px; font-size: .62rem; font-weight: 700; line-height: 1; opacity: .85; }
 #pad button.used::after { content: ""; }
 #error { color: var(--conflict-text); }
 
@@ -247,3 +247,11 @@ body.big .notes span { font-size: clamp(.7rem, 3.6vw, 1rem); }
 .calday.full { background: var(--accent); color: #fff; border-color: var(--accent); }
 .calday.viewing { outline: 3px solid var(--accent); outline-offset: 1px; }
 .calday.now { font-weight: 800; }
+
+/* Accessibility: clear keyboard focus, conflicts not shown by colour alone, less motion */
+button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.cell:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; z-index: 1; }
+.cell.conflict { text-decoration: underline wavy var(--conflict-text); text-underline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) {
+  .cell.hint, #hint.pulse { animation: none !important; }
+}
