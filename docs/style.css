@@ -101,9 +101,9 @@ button:active { filter: brightness(.95); }
 }
 @media (prefers-reduced-motion: reduce) { #board.win { animation: none !important; } }
 
-.cell.hintzone { background: #fff1bd; }
-.cell.hint { background: #ffd24d; outline: 3px solid #d97706; outline-offset: -3px; animation: hintpulse 1.2s ease-in-out 3; }
-.cell.hint.ghost { color: #7c2d00; font-weight: 800; }
+.cell.hintzone { background: #c9f0dc; }
+.cell.hint { background: #3ecf8e; outline: 3px solid #0b6b3f; outline-offset: -3px; animation: hintpulse 1.2s ease-in-out 3; }
+.cell.hint.ghost { color: #04331d; font-weight: 800; }
 @keyframes hintpulse { 50% { filter: brightness(1.12); } }
 #hinttext { min-height: 2.4em; margin: 0 2px 4px; line-height: 1.3; font-size: 1.05rem; font-weight: 600; color: var(--accent); }
 #hint.pulse { animation: hintbtn 1s ease-in-out infinite; border-color: var(--accent); }
