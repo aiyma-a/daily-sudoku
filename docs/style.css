@@ -250,7 +250,6 @@ body.big .notes span { font-size: clamp(.7rem, 3.6vw, 1rem); }
 /* Accessibility: clear keyboard focus, conflicts not shown by colour alone, less motion */
 button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .cell:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; z-index: 1; }
-.cell.conflict { text-decoration: underline wavy var(--conflict-text); text-underline-offset: 4px; }
 @media (prefers-reduced-motion: reduce) {
   .cell.hint, #hint.pulse { animation: none !important; }
 }
