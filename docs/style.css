@@ -86,7 +86,6 @@ button:active { filter: brightness(.95); }
 #pad { display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; }
 #pad button { padding: 0; min-height: 52px; font-size: 1.35rem; position: relative; }
 #pad button.used { opacity: .35; }
-#pad button::after { content: attr(data-left); position: absolute; top: 2px; right: 4px; font-size: .62rem; font-weight: 700; line-height: 1; opacity: .85; }
 #pad button.used::after { content: ""; }
 #error { color: var(--conflict-text); }
 
