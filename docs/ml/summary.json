@@ -31,7 +31,9 @@
     "hidden_singles_at_start",
     0.008
    ]
-  ]
+  ],
+  "r2_without_key_feature": 0.464,
+  "key_feature": "left_after_singles"
  },
  "hint": {
   "regret": {
