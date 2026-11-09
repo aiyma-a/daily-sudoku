@@ -32,7 +32,7 @@
     <h2>1. Difficulty model</h2>
     <p>Each puzzle is turned into 17 numbers (<b>feature engineering</b>), and a model of many small decision trees (<b>gradient boosting</b>) learns to predict how hard it is without solving it. How much of the real difficulty it explains (higher is better):</p>
     <div id="diff"></div>
-    <p><small>The biggest clue it uses: how many cells are still empty after simple forced moves. Adding that feature raised the score from 43% to 81%.</small></p>
+    <p><small>The biggest clue it uses: how many cells are still empty after simple forced moves. Adding that feature raised the score from <span id="diffwo">–</span> to <span id="diffw">–</span>.</small></p>
     <img src="ml/predicted_vs_real.png" alt="Predicted vs real difficulty" width="320">
   </section>
 
@@ -78,6 +78,8 @@
   const pct = (v) => Math.round(v * 100) + "%";
   fetch("ml/summary.json").then((r) => r.json()).then((s) => {
     const d = s.difficulty.r2;
+    document.getElementById("diffwo").textContent = pct(s.difficulty.r2_without_key_feature);
+    document.getElementById("diffw").textContent = pct(d["gradient-boosted trees (shipped)"]);
     bars(document.getElementById("diff"), [
       ["Guess the average", d["average (dumb baseline)"]],
       ["Clue count only", d["linear on clue count"]],
