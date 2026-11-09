@@ -179,7 +179,6 @@
       const left = Math.max(0, 9 - counts[+b.dataset.n]);
       b.classList.toggle("used", left === 0);
       b.setAttribute("aria-label", b.dataset.n + ", " + (left ? T("{n} left", { n: left }) : T("all placed")));
-      b.dataset.left = left; // shown as a small badge: how many of this digit are still to place
     });
     [...$("levels").children].forEach((b) => {
       b.classList.toggle("active", b.dataset.level === level);
