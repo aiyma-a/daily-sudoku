@@ -34,6 +34,7 @@
   let mistakeModel = null;
   let pace = Store.json("ds:pace", { ...window.Mistake.PACE });
   let lastMove = 0;     // st.elapsed at the last move
+  let recap = "";       // after a solve: your time and your average on this level
   let tip = "";         // message from "Just right for you"
   const loadSkill = () => Store.json("ds:skill", { ...window.Skill.PRIOR });
 
@@ -60,6 +61,7 @@
   function load() {
     if (mode === "daily" && !day) { mode = "practice"; }
     pickPuzzle();
+    recap = "";
     updateChrome();
     st = Store.json(key(), null) || fresh();
     sel = -1;
@@ -187,7 +189,10 @@
     $("notes").textContent = T("Notes");
     $("notes").setAttribute("aria-pressed", notesOn);
     $("msg").textContent = st.done ? T("Solved! 🎉") : "";
-    $("hinttext").textContent = st.done ? "" : (hintText() || tip);
+    $("hinttext").textContent = st.done ? recap : (hintText() || tip);
+    const nx = st.done ? tryNextLevel() : null;
+    $("tryNext").hidden = !nx;
+    if (nx) $("tryNext").textContent = T("Try {lv}?", { lv: T(cap(nx)) });
     tick();
     Stats.renderStreak();
     $("share").hidden = !st.done;
@@ -287,6 +292,26 @@
   }
   $("btnFillNotes").addEventListener("click", fillNotes);
 
+  // Last 5 solve times per level (hints count as +30 s, like the skill model).
+  const loadTimes = () => Store.json("ds:times", {});
+  function recordTime() {
+    const secs = Math.max(30, st.elapsed + 30 * (st.hints || 0));
+    const all = loadTimes();
+    all[level] = (all[level] || []).concat(secs).slice(-5);
+    Store.setJson("ds:times", all);
+    const avg = all[level].reduce((a, b) => a + b, 0) / all[level].length;
+    const mins = (x) => Math.max(1, Math.round(x / 60));
+    recap = all[level].length > 1
+      ? T("You took {m} min. Your average on {lv}: {a} min.", { m: mins(secs), lv: T(cap(level)), a: mins(avg) })
+      : T("You took {m} min.", { m: mins(secs) });
+  }
+  // The next level up, if your last 3 solves here were all quick (5 min or less).
+  function tryNextLevel() {
+    const next = LEVELS[LEVELS.indexOf(level) + 1];
+    const t = (loadTimes()[level] || []).slice(-3);
+    return next && t.length === 3 && t.every((x) => x <= 300) ? next : null;
+  }
+
   function afterMove(isUndo) {
     hint = null;
     tip = "";
@@ -300,6 +325,7 @@
         Stats.recordSolve();
         Store.setJson("ds:skill",
           window.Skill.update(loadSkill(), cur.score || 70, st.elapsed, st.hints));
+        recordTime();
       }
       $("board").classList.remove("win");
       void $("board").offsetWidth; // restart the animation
@@ -519,6 +545,11 @@
   $("undo").addEventListener("click", undo);
   $("reset").addEventListener("click", startOver);
   $("hint").addEventListener("click", giveHint);
+  $("tryNext").addEventListener("click", () => {
+    const nx = tryNextLevel();
+    if (!nx) return;
+    save(); hint = null; tip = ""; recap = ""; level = nx; Store.set("ds:level", level); load();
+  });
   $("fit").addEventListener("click", () => {
     const open = mode === "daily" && day
       ? LEVELS.filter((lv) => !isDone(lv)).map((lv) => ({ level: lv, score: day[lv].score || 70 }))

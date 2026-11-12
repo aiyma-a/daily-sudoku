@@ -170,6 +170,8 @@ const ok = (c, msg) => { if (!c) throw new Error(msg || "check failed"); };
     await page.waitForFunction(() => /Solved/.test(document.getElementById("msg").textContent));
     ok(await page.locator("#share").isVisible(), "no Share button");
     ok(await page.locator("#savePic").isVisible(), "no Save picture button");
+    ok(/You took \d+ min/.test(await page.locator("#hinttext").textContent()), "no time recap after solving");
+    ok(await page.locator("#tryNext").isHidden(), "Try-next chip shown after one solve");
   });
 
   await check("Save picture downloads a PNG", async () => {
