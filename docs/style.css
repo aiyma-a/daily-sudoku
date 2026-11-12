@@ -195,15 +195,17 @@ button:active { filter: brightness(.95); }
 
 body.big .cell { font-size: clamp(1.4rem, 7.6vw, 2.3rem); }
 body.big .notes span { font-size: clamp(.7rem, 3.6vw, 1rem); }
+#tryNext { width: 100%; min-height: 48px; margin: 6px 0; font-weight: 700; color: var(--accent); border-color: var(--accent); background: transparent; }
 #share { width: 100%; min-height: 48px; margin: 6px 0; background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
 #savePic { width: 100%; min-height: 44px; margin: 0 0 6px; }
-#share[hidden], #savePic[hidden], #toast[hidden] { display: none; }
+#tryNext[hidden], #share[hidden], #savePic[hidden], #toast[hidden] { display: none; }
 #toast { position: fixed; left: 12px; right: 12px; top: calc(12px + env(safe-area-inset-top)); z-index: 60; background: var(--text); color: var(--bg); padding: 10px 14px; border-radius: var(--radius); text-align: center; font-weight: 600; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
 #modalbody .ach { opacity: .6; margin: 4px 0; }
 #modalbody .ach.on { opacity: 1; }
 @media (orientation: landscape) and (max-height: 620px) {
   body.big .cell { font-size: calc(var(--board) / 9 * 0.8); }
   body.big .notes span { font-size: calc(var(--board) / 27 * 1.05); }
+  #tryNext { grid-column: 2; margin: 2px 0; min-height: 40px; }
   #share { grid-column: 2; margin: 2px 0; min-height: 40px; }
 }
 
